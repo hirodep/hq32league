@@ -3091,11 +3091,11 @@
   });
 
   // FAQ accordion
-  function toggleFaq(btn) {
+  window.toggleFaq = function(btn) {
     const answer = btn.nextElementSibling;
     btn.classList.toggle('open');
     answer.classList.toggle('open');
-  }
+  };
 
   let selectedFormat = '';
 
@@ -3325,6 +3325,15 @@
   }
 
   function closeSortingDone(){document.getElementById('sortingDoneOverlay').classList.remove('active');}
+
+  // Fallback: attach FAQ listeners directly in case onclick attr can't reach toggleFaq
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var answer = btn.nextElementSibling;
+      btn.classList.toggle('open');
+      answer.classList.toggle('open');
+    });
+  });
 
 </script>
 <!-- MINI GAME OVERLAY -->
