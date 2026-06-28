@@ -1,0 +1,3351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HooperQuest32</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    /* PASSWORD GATE */
+    #pw-gate {
+      position: fixed;
+      inset: 0;
+      background: #0d0d1a;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    #pw-gate .pw-logo {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #f5f5f5;
+      letter-spacing: -1px;
+    }
+    #pw-gate .pw-logo span { color: #FF6B1A; }
+    #pw-gate p {
+      color: #a0a0b0;
+      font-size: 0.95rem;
+    }
+    #pw-gate input {
+      background: #1a1a2e;
+      border: 1px solid rgba(255,107,26,0.4);
+      border-radius: 8px;
+      color: #f5f5f5;
+      font-size: 1.1rem;
+      padding: 0.75rem 1.25rem;
+      width: 280px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #pw-gate input:focus { border-color: #FF6B1A; }
+    #pw-gate button {
+      background: #FF6B1A;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.75rem 2rem;
+      cursor: pointer;
+      width: 280px;
+      transition: background 0.2s;
+    }
+    #pw-gate button:hover { background: #e05a0e; }
+    #pw-gate .pw-error {
+      color: #e94560;
+      font-size: 0.85rem;
+      min-height: 1rem;
+    }
+    #pw-gate.hidden { display: none; }
+  </style>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF6B1A;
+      --orange-dark: #e05a0e;
+      --court: #1a1a2e;
+      --court-mid: #16213e;
+      --court-light: #0f3460;
+      --white: #f5f5f5;
+      --gray: #a0a0b0;
+      --accent: #e94560;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--court);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 2rem;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,107,26,0.2);
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--white);
+    }
+    .logo span { color: var(--orange); }
+    nav a {
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--orange); }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 1.5rem;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,26,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(233,69,96,0.12) 0%, transparent 60%),
+        linear-gradient(180deg, var(--court) 0%, var(--court-mid) 100%);
+    }
+    /* court lines decoration */
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(255,107,26,0.05) 79px, rgba(255,107,26,0.05) 80px),
+        repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,107,26,0.05) 79px, rgba(255,107,26,0.05) 80px);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(255,107,26,0.15);
+      border: 1px solid rgba(255,107,26,0.4);
+      color: var(--orange);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -2px;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 .highlight { color: var(--orange); }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--gray);
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+    .ball-emoji {
+      font-size: 3.5rem;
+      display: block;
+      margin-bottom: 1rem;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    /* SIGNUP FORM */
+    .signup-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,107,26,0.25);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 480px;
+      margin: 0 auto;
+      backdrop-filter: blur(10px);
+    }
+    .signup-box h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 0.4rem;
+    }
+    .signup-box p {
+      font-size: 0.9rem;
+      color: var(--gray);
+      margin-bottom: 1.5rem;
+    }
+    .form-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .form-row input, .signup-box select {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      color: var(--white);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .form-row input::placeholder { color: rgba(160,160,176,0.6); }
+    .form-row input:focus, .signup-box select:focus {
+      border-color: var(--orange);
+    }
+    .signup-box select {
+      margin-bottom: 0.75rem;
+      appearance: none;
+      cursor: pointer;
+    }
+    .signup-box select option { background: var(--court-mid); }
+    .btn-signup {
+      width: 100%;
+      background: var(--orange);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      border: none;
+      border-radius: 10px;
+      padding: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+      letter-spacing: 0.5px;
+    }
+    .btn-signup:hover { background: var(--orange-dark); transform: translateY(-1px); }
+    .btn-signup:active { transform: translateY(0); }
+
+    .team-counter {
+      margin-top: 1.2rem;
+      font-size: 0.85rem;
+      color: var(--gray);
+      text-align: center;
+    }
+    .team-counter strong { color: var(--orange); font-size: 1.1rem; }
+
+    /* FORMAT PICKER */
+    .format-picker {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .format-btn {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.9rem;
+      color: var(--gray);
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .format-btn:hover { border-color: var(--orange); color: var(--white); }
+    .format-btn.selected {
+      border-color: var(--orange);
+      background: rgba(255,107,26,0.15);
+      color: var(--white);
+    }
+    .format-label {
+      font-size: 0.72rem;
+      color: var(--gray);
+      text-align: center;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+
+    /* AGE GATE */
+    .age-field { margin-bottom: 0.75rem; }
+    .age-field label {
+      display: block; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--gray); margin-bottom: 0.4rem;
+    }
+    .age-field input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 0.8rem 1rem;
+      color: var(--white); font-size: 0.95rem;
+      font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .age-field input:focus { border-color: var(--orange); }
+    .age-warning {
+      display: none;
+      background: rgba(233,69,96,0.1);
+      border: 1px solid rgba(233,69,96,0.3);
+      border-radius: 10px; padding: 0.75rem 1rem;
+      font-size: 0.83rem; color: #e94560;
+      margin-bottom: 0.75rem; line-height: 1.5;
+    }
+    .age-warning.show { display: block; }
+    .minor-notice {
+      display: none;
+      background: rgba(255,215,0,0.06);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 10px; padding: 0.75rem 1rem;
+      font-size: 0.83rem; color: #FFD700;
+      margin-bottom: 0.75rem; line-height: 1.5;
+    }
+    .minor-notice.show { display: block; }
+
+    /* PARENTAL CONSENT MODAL */
+    .parent-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+      z-index: 350; overflow-y: auto; padding: 2rem 1rem;
+    }
+    .parent-modal.active { display: block; }
+    .parent-modal-box {
+      background: var(--court-mid);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 20px; padding: 2.5rem;
+      max-width: 560px; margin: auto;
+    }
+    .parent-modal-box .pm-icon { font-size: 2rem; margin-bottom: 0.5rem; display: block; text-align: center; }
+    .parent-modal-box h2 { font-size: 1.2rem; font-weight: 900; text-align: center; margin-bottom: 0.3rem; color: #FFD700; }
+    .parent-modal-box .pm-sub { font-size: 0.82rem; color: var(--gray); text-align: center; margin-bottom: 1.5rem; }
+    .parent-field { margin-bottom: 0.85rem; }
+    .parent-field label { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gray); margin-bottom: 0.35rem; }
+    .parent-field input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 0.8rem 1rem;
+      color: var(--white); font-size: 0.9rem;
+      font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .parent-field input:focus { border-color: #FFD700; }
+    .parent-consent-text {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 1rem;
+      font-size: 0.78rem; color: #aaa;
+      line-height: 1.7; max-height: 180px;
+      overflow-y: auto; margin-bottom: 1rem;
+    }
+    .parent-consent-text strong { color: var(--white); }
+    .parent-check-row {
+      display: flex; gap: 0.75rem; align-items: flex-start;
+      margin-bottom: 1rem; font-size: 0.82rem; color: var(--gray);
+    }
+    .parent-check-row input[type="checkbox"] {
+      width: 18px; height: 18px; min-width: 18px;
+      accent-color: #FFD700; margin-top: 2px; cursor: pointer;
+    }
+    .btn-parent-submit {
+      width: 100%; background: #FFD700; border: none;
+      border-radius: 10px; padding: 0.9rem; color: #000;
+      font-size: 1rem; font-weight: 900; cursor: pointer;
+      font-family: inherit; transition: opacity 0.2s;
+      margin-bottom: 0.5rem;
+    }
+    .btn-parent-submit:hover { opacity: 0.88; }
+    .btn-parent-cancel {
+      width: 100%; background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; padding: 0.75rem; color: var(--gray);
+      font-size: 0.88rem; font-weight: 700; cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-parent-cancel:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+
+    /* GUILD SELECTION */
+    .guild-select-section {
+      margin-bottom: 1rem;
+    }
+    .guild-select-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+    .guild-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+    .guild-card-btn {
+      background: rgba(255,255,255,0.04);
+      border: 2px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 0.9rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-family: inherit;
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .guild-card-btn:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .guild-card-btn.selected { border-color: var(--guild-color, var(--orange)); background: rgba(255,255,255,0.07); }
+    .guild-card-btn.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 0.5rem; right: 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 900;
+      color: var(--guild-color, var(--orange));
+    }
+    .guild-emblem { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+    .guild-card-name { font-size: 0.85rem; font-weight: 900; display: block; margin-bottom: 0.15rem; }
+    .guild-card-motto { font-size: 0.7rem; color: var(--gray); line-height: 1.3; }
+
+    /* GUILD FORMATION */
+    .guild-formation {
+      background: #04040a;
+      padding: 5rem 1.5rem;
+      border-top: 1px solid #111;
+    }
+    .guild-formation-inner { max-width: 860px; margin: 0 auto; }
+    .guild-formation-header { text-align: center; margin-bottom: 3rem; }
+    .guild-formation-header .section-tag { color: var(--orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem; display: block; }
+    .guild-formation-header h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 0.75rem; }
+    .guild-formation-header p { color: var(--gray); font-size: 0.95rem; max-width: 580px; margin: 0 auto; line-height: 1.7; }
+
+    .s2-banner {
+      background: rgba(255,215,0,0.05);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 14px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      margin-bottom: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .s2-banner span { font-size: 0.82rem; color: #FFD700; font-weight: 700; }
+    .s2-banner .s2-pill {
+      background: rgba(255,215,0,0.15);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 100px;
+      padding: 0.25rem 0.8rem;
+      font-size: 0.7rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #FFD700;
+    }
+
+    .formation-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .formation-step {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .formation-step .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,107,26,0.15);
+      border: 1px solid rgba(255,107,26,0.3);
+      color: var(--orange);
+      font-size: 0.78rem;
+      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+    .formation-step h4 { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .formation-step p { font-size: 0.83rem; color: var(--gray); line-height: 1.6; }
+    .formation-step .step-icon { font-size: 1.3rem; position: absolute; top: 1.5rem; right: 1.5rem; opacity: 0.4; }
+
+    .founder-rules {
+      background: rgba(255,107,26,0.04);
+      border: 1px solid rgba(255,107,26,0.15);
+      border-radius: 14px;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .founder-rules h3 {
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1.2rem;
+    }
+    .founder-rule-item {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.88rem;
+      color: #ccc;
+      line-height: 1.5;
+      align-items: flex-start;
+    }
+    .founder-rule-item:last-child { margin-bottom: 0; }
+    .founder-rule-item .fr-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .founder-register-box {
+      background: rgba(255,215,0,0.04);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 520px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .founder-register-box h3 { font-size: 1.2rem; font-weight: 900; margin-bottom: 0.4rem; color: #FFD700; }
+    .founder-register-box p { font-size: 0.88rem; color: var(--gray); margin-bottom: 1.5rem; line-height: 1.6; }
+    .founder-form { text-align: left; }
+    .founder-field { margin-bottom: 0.85rem; }
+    .founder-field label { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gray); margin-bottom: 0.35rem; }
+    .founder-field input, .founder-field textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      color: var(--white);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .founder-field input::placeholder, .founder-field textarea::placeholder { color: rgba(160,160,176,0.5); }
+    .founder-field input:focus, .founder-field textarea:focus { border-color: #FFD700; }
+    .founder-field textarea { resize: vertical; min-height: 70px; }
+    .btn-founder-submit {
+      width: 100%;
+      background: #FFD700;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 0.9rem;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 0.5rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-founder-submit:hover { opacity: 0.88; transform: translateY(-1px); }
+    .founder-success { display: none; text-align: center; padding: 1rem 0; }
+    .founder-success .fs-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .founder-success h4 { font-size: 1.1rem; font-weight: 900; color: #FFD700; margin-bottom: 0.4rem; }
+    .founder-success p { font-size: 0.88rem; color: var(--gray); line-height: 1.6; }
+
+    /* GUILD SECTION */
+    .guilds-section {
+      background: #060608;
+      padding: 5rem 1.5rem;
+      border-top: 1px solid #111;
+    }
+    .guilds-inner { max-width: 1000px; margin: 0 auto; }
+    .guilds-header { text-align: center; margin-bottom: 1rem; }
+    .guilds-header .section-tag { color: var(--orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem; display: block; }
+    .guilds-header h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 0.75rem; }
+    .guilds-header p { color: var(--gray); font-size: 0.95rem; max-width: 540px; margin: 0 auto 1rem; line-height: 1.7; }
+    .keeper-note {
+      text-align: center;
+      font-size: 0.78rem;
+      color: rgba(160,160,176,0.5);
+      margin-bottom: 3rem;
+      letter-spacing: 1px;
+    }
+    .keeper-note span { color: var(--orange); font-weight: 700; }
+    .guilds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 3rem;
+    }
+    .guild-full-card {
+      border-radius: 18px;
+      padding: 2rem 1.5rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: default;
+    }
+    .guild-full-card:hover { transform: translateY(-4px); }
+    .guild-full-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gc);
+    }
+    .guild-full-card.sharpened { background: rgba(220,50,50,0.05); --gc: #DC3232; border-color: rgba(220,50,50,0.15); }
+    .guild-full-card.sharpened:hover { border-color: rgba(220,50,50,0.4); }
+    .guild-full-card.seekers { background: rgba(255,107,26,0.05); --gc: #FF6B1A; border-color: rgba(255,107,26,0.15); }
+    .guild-full-card.seekers:hover { border-color: rgba(255,107,26,0.4); }
+    .guild-full-card.architects { background: rgba(50,130,220,0.05); --gc: #3282DC; border-color: rgba(50,130,220,0.15); }
+    .guild-full-card.architects:hover { border-color: rgba(50,130,220,0.4); }
+    .guild-full-card.unknown { background: rgba(150,50,220,0.05); --gc: #9632DC; border-color: rgba(150,50,220,0.15); }
+    .guild-full-card.unknown:hover { border-color: rgba(150,50,220,0.4); }
+    .guild-big-emblem { font-size: 2.8rem; margin-bottom: 1rem; display: block; }
+    .guild-full-name {
+      font-size: 1.1rem;
+      font-weight: 900;
+      margin-bottom: 0.2rem;
+      color: var(--white);
+    }
+    .guild-form-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gc);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+    .guild-desc {
+      font-size: 0.85rem;
+      color: var(--gray);
+      line-height: 1.6;
+      margin-bottom: 1.2rem;
+    }
+    .guild-identity {
+      font-size: 0.78rem;
+      font-style: italic;
+      color: rgba(255,255,255,0.5);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .guild-stats-row {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.75rem;
+      color: var(--gray);
+    }
+    .guild-stats-row span strong { display: block; color: var(--white); font-size: 0.95rem; font-weight: 900; }
+    .guild-join-btn {
+      width: 100%;
+      margin-top: 1.2rem;
+      background: var(--gc);
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .guild-join-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* GUILD HIERARCHY */
+    .guild-hierarchy {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .guild-hierarchy h3 {
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .hierarchy-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .hierarchy-row:last-child { border-bottom: none; }
+    .hierarchy-icon {
+      font-size: 1.5rem;
+      width: 40px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .hierarchy-info h4 { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .hierarchy-info p { font-size: 0.82rem; color: var(--gray); line-height: 1.5; }
+    .hierarchy-info .h-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: rgba(255,107,26,0.1);
+      color: var(--orange);
+      border: 1px solid rgba(255,107,26,0.2);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.3rem;
+    }
+
+    /* CAPTAIN TOGGLE */
+    .captain-toggle {
+      margin: 0.5rem 0 1rem;
+      background: rgba(255,215,0,0.05);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .captain-toggle.active {
+      background: rgba(255,215,0,0.1);
+      border-color: rgba(255,215,0,0.5);
+    }
+    .captain-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .captain-toggle-row input[type="checkbox"] {
+      width: 18px; height: 18px; min-width: 18px;
+      accent-color: #FFD700;
+      cursor: pointer;
+    }
+    .captain-toggle-label { flex: 1; }
+    .captain-toggle-label strong {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #FFD700;
+      margin-bottom: 0.15rem;
+    }
+    .captain-toggle-label span {
+      font-size: 0.78rem;
+      color: var(--gray);
+      line-height: 1.4;
+    }
+    .captain-badge-icon { font-size: 1.5rem; }
+
+    /* DRAFT OVERLAY */
+    .draft-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      backdrop-filter: blur(12px);
+      z-index: 250;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+    }
+    .draft-overlay.active { display: block; }
+    .draft-container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .draft-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .draft-header h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 0.3rem; }
+    .draft-header h2 span { color: #FFD700; }
+    .draft-header p { font-size: 0.9rem; color: var(--gray); }
+    .draft-status-banner {
+      background: rgba(255,215,0,0.08);
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 0.88rem;
+      color: #FFD700;
+      font-weight: 700;
+    }
+    .draft-status-banner.open {
+      background: rgba(0,200,100,0.08);
+      border-color: rgba(0,200,100,0.3);
+      color: #00C864;
+    }
+    .draft-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 1.5rem;
+    }
+    @media (max-width: 640px) { .draft-layout { grid-template-columns: 1fr; } }
+    .draft-pool h3, .draft-my-team h3 {
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255,107,26,0.2);
+    }
+    .draft-my-team h3 { color: #FFD700; border-color: rgba(255,215,0,0.2); }
+    .player-pool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+    .pool-player-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: border-color 0.2s;
+    }
+    .pool-player-card:hover { border-color: rgba(255,107,26,0.4); }
+    .pool-player-card.drafted { opacity: 0.35; pointer-events: none; }
+    .pool-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(255,107,26,0.15);
+      border: 2px solid rgba(255,107,26,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .pool-info { flex: 1; min-width: 0; }
+    .pool-info .pool-name { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pool-info .pool-format { font-size: 0.72rem; color: var(--gray); }
+    .btn-draft-pick {
+      background: var(--orange);
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 0.75rem;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-draft-pick:hover { background: var(--orange-dark); }
+    .btn-draft-pick:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .roster-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .roster-item {
+      background: rgba(255,215,0,0.05);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+    }
+    .roster-item .roster-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #FFD700;
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .roster-empty {
+      text-align: center;
+      color: rgba(160,160,176,0.4);
+      font-size: 0.85rem;
+      padding: 1.5rem;
+      border: 1px dashed rgba(255,215,0,0.15);
+      border-radius: 10px;
+    }
+    .draft-close-btn {
+      display: block;
+      margin: 2rem auto 0;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 0.75rem 2rem;
+      color: var(--gray);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .draft-close-btn:hover { border-color: var(--orange); color: var(--white); }
+
+    /* BIO PAGE */
+    .bio-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 200;
+      overflow-y: auto;
+      padding: 2rem 1rem;
+    }
+    .bio-page.active { display: flex; align-items: flex-start; justify-content: center; }
+    .bio-card {
+      background: var(--court-mid);
+      border: 1px solid rgba(255,107,26,0.3);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 520px;
+      width: 100%;
+      margin: auto;
+    }
+    .bio-card-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .bio-card-header .player-avatar-wrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 1rem;
+      cursor: pointer;
+    }
+    .player-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--orange);
+      display: block;
+    }
+    .avatar-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px dashed rgba(255,107,26,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      background: rgba(255,107,26,0.05);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .avatar-placeholder:hover { border-color: var(--orange); background: rgba(255,107,26,0.1); }
+    .avatar-upload-hint {
+      font-size: 0.72rem;
+      color: var(--gray);
+      margin-top: 0.4rem;
+    }
+    .bio-card-header h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .bio-card-header p { font-size: 0.88rem; color: var(--gray); }
+    .bio-field { margin-bottom: 1rem; }
+    .bio-field label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 0.4rem;
+    }
+    .bio-field label .optional {
+      font-weight: 400;
+      color: rgba(160,160,176,0.5);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .bio-field input, .bio-field textarea, .bio-field select {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      color: var(--white);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .bio-field input::placeholder, .bio-field textarea::placeholder { color: rgba(160,160,176,0.5); }
+    .bio-field input:focus, .bio-field textarea:focus, .bio-field select:focus { border-color: var(--orange); }
+    .bio-field textarea { resize: vertical; min-height: 80px; }
+    .bio-field select { appearance: none; cursor: pointer; }
+    .bio-field select option { background: var(--court-mid); }
+    .bio-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .btn-skip {
+      flex: 1;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 0.85rem;
+      color: var(--gray);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .btn-skip:hover { border-color: rgba(255,255,255,0.35); color: var(--white); }
+    .btn-save-bio {
+      flex: 2;
+      background: var(--orange);
+      border: none;
+      border-radius: 10px;
+      padding: 0.85rem;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-save-bio:hover { background: var(--orange-dark); transform: translateY(-1px); }
+
+    /* PLAYER CARD REVEAL */
+    .player-card-reveal {
+      display: none;
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .player-card {
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      border: 2px solid var(--orange);
+      border-radius: 18px;
+      padding: 2rem 1.5rem;
+      max-width: 300px;
+      margin: 0 auto 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .player-card::before {
+      content: 'HQ32';
+      position: absolute;
+      top: 0.8rem; right: 1rem;
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: rgba(255,107,26,0.4);
+      letter-spacing: 2px;
+    }
+    .card-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid var(--orange);
+      margin: 0 auto 0.8rem;
+      object-fit: cover;
+      display: block;
+      font-size: 2.5rem;
+      line-height: 74px;
+      text-align: center;
+      background: rgba(255,107,26,0.1);
+    }
+    .card-name { font-size: 1.2rem; font-weight: 900; margin-bottom: 0.2rem; }
+    .card-tag { font-size: 0.85rem; color: var(--orange); margin-bottom: 0.8rem; font-weight: 700; }
+    .card-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--gray);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 0.8rem;
+    }
+    .card-stats span strong { display: block; color: var(--white); font-size: 0.95rem; }
+    .card-playstyle {
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+      color: var(--gray);
+      font-style: italic;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 0.8rem;
+    }
+    .btn-done {
+      background: var(--orange);
+      border: none;
+      border-radius: 10px;
+      padding: 0.85rem 2.5rem;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* CHECKBOXES */
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      text-align: left;
+    }
+    .consent-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      margin-top: 2px;
+      accent-color: var(--orange);
+      cursor: pointer;
+    }
+    .consent-row label {
+      font-size: 0.82rem;
+      color: var(--gray);
+      line-height: 1.5;
+      cursor: pointer;
+    }
+    .consent-row label a {
+      color: var(--orange);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* WAIVER MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(8px);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--court-mid);
+      border: 1px solid rgba(255,107,26,0.3);
+      border-radius: 18px;
+      padding: 2rem;
+      max-width: 580px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-box h3 {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--orange);
+      margin-bottom: 0.3rem;
+    }
+    .modal-box .modal-date {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-bottom: 1.2rem;
+      letter-spacing: 1px;
+    }
+    .modal-box p {
+      font-size: 0.88rem;
+      color: #bbb;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .modal-box p strong { color: var(--white); }
+    .modal-box .modal-close {
+      width: 100%;
+      background: var(--orange);
+      border: none;
+      border-radius: 10px;
+      padding: 0.85rem;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 1rem;
+    }
+
+    /* FAQ SECTION */
+    .faq-section {
+      background: var(--court);
+      padding: 5rem 1.5rem;
+      border-top: 1px solid rgba(255,107,26,0.08);
+    }
+    .faq-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .faq-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .faq-header .section-tag { color: var(--orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem; display: block; }
+    .faq-header h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px; }
+    .faq-item {
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      text-align: left;
+      padding: 1.2rem 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .faq-q:hover { color: var(--orange); }
+    .faq-q .faq-icon {
+      font-size: 1.2rem;
+      color: var(--orange);
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .faq-q.open .faq-icon { transform: rotate(45deg); }
+    .faq-a {
+      display: none;
+      font-size: 0.92rem;
+      color: var(--gray);
+      line-height: 1.7;
+      padding-bottom: 1.2rem;
+    }
+    .faq-a.open { display: block; }
+    .faq-a strong { color: var(--white); }
+
+    /* SUCCESS STATE */
+    .success-msg {
+      display: none;
+      text-align: center;
+      padding: 1rem;
+    }
+    .success-msg .check { font-size: 3rem; margin-bottom: 0.5rem; }
+    .success-msg h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .success-msg p { color: var(--gray); font-size: 0.95rem; }
+
+    /* STATS */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      padding: 3rem 1.5rem;
+      background: var(--court-mid);
+      border-top: 1px solid rgba(255,107,26,0.1);
+      border-bottom: 1px solid rgba(255,107,26,0.1);
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat .num {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: var(--orange);
+      display: block;
+    }
+    .stat .label {
+      font-size: 0.8rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    /* HOW IT WORKS */
+    .section {
+      padding: 5rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .section-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.75rem;
+    }
+    .section h2 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900;
+      margin-bottom: 1rem;
+      letter-spacing: -1px;
+    }
+    .section > p {
+      color: var(--gray);
+      max-width: 520px;
+      margin: 0 auto 3rem;
+      line-height: 1.6;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+    .step {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 2rem 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .step:hover {
+      border-color: rgba(255,107,26,0.35);
+      transform: translateY(-4px);
+    }
+    .step-icon { font-size: 2.2rem; margin-bottom: 1rem; }
+    .step h3 { font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.88rem; color: var(--gray); line-height: 1.5; }
+
+    /* PHILOSOPHY SECTION */
+    .philosophy {
+      background: #000;
+      padding: 5rem 1.5rem 3rem;
+      text-align: center;
+    }
+    .formula {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+      margin-bottom: 1rem;
+    }
+    .formula-hq {
+      font-family: 'Arial Black', Impact, sans-serif;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+    .formula-hq .f-white { color: #e0e0e0; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
+    .formula-hq .f-orange { color: var(--orange); text-shadow: 0 0 20px rgba(255,107,26,0.5); }
+    .formula-eq {
+      font-size: clamp(3rem, 8vw, 6rem);
+      color: #ccc;
+      font-weight: 300;
+      padding: 0 0.3rem;
+    }
+    .formula-paren {
+      font-size: clamp(4rem, 11vw, 8rem);
+      color: #ccc;
+      font-weight: 200;
+      line-height: 1;
+    }
+    .formula-e {
+      font-family: Georgia, serif;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-style: italic;
+      color: #ccc;
+      font-weight: 400;
+    }
+    .formula-ball {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      vertical-align: super;
+      line-height: 1;
+      position: relative;
+      top: -0.8em;
+    }
+    .formula-pi {
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      color: var(--orange);
+      font-weight: 900;
+      font-family: Georgia, serif;
+      text-shadow: 0 0 20px rgba(255,107,26,0.4);
+    }
+    .philosophy-subtitle {
+      font-size: 0.8rem;
+      letter-spacing: 5px;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .philosophy-subtitle::before,
+    .philosophy-subtitle::after {
+      content: '';
+      width: 60px;
+      height: 1px;
+      background: #444;
+    }
+    .philosophy-divider {
+      width: 6px;
+      height: 6px;
+      background: var(--orange);
+      border-radius: 50%;
+      margin: 0 auto 3rem;
+    }
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0;
+      max-width: 1000px;
+      margin: 0 auto 3rem;
+      border: 1px solid #222;
+    }
+    .pillar {
+      padding: 2rem 1.2rem;
+      border-right: 1px solid #222;
+      text-align: left;
+    }
+    .pillar:last-child { border-right: none; }
+    .pillar-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+    .pillar-icon.orange-text {
+      color: var(--orange);
+      font-family: 'Arial Black', Impact, sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+    }
+    .pillar-icon.serif-e {
+      font-family: Georgia, serif;
+      font-style: italic;
+      color: #ccc;
+      font-size: 2rem;
+    }
+    .pillar-icon.serif-pi {
+      font-family: Georgia, serif;
+      color: var(--orange);
+      font-size: 2rem;
+    }
+    .pillar h4 {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.6rem;
+      line-height: 1.3;
+    }
+    .pillar p {
+      font-size: 0.82rem;
+      color: #888;
+      line-height: 1.5;
+    }
+    .philosophy-tagline {
+      font-size: clamp(0.75rem, 2vw, 0.95rem);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #666;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1a1a1a;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .philosophy-tagline .t-orange { color: var(--orange); }
+
+    /* SEVEN FORMS */
+    .seven-forms {
+      background: #050505;
+      padding: 5rem 1.5rem;
+      border-top: 1px solid #111;
+    }
+    .seven-forms-inner { max-width: 1000px; margin: 0 auto; }
+    .seven-forms-header { text-align: center; margin-bottom: 3.5rem; }
+    .seven-forms-header .section-tag { color: var(--orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem; display: block; }
+    .seven-forms-header h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 0.75rem; }
+    .seven-forms-header p { color: var(--gray); font-size: 0.95rem; max-width: 560px; margin: 0 auto; line-height: 1.7; }
+    .forms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .form-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .form-card:hover { border-color: rgba(255,107,26,0.35); transform: translateY(-3px); }
+    .form-num {
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .form-card h3 { font-size: 1rem; font-weight: 900; margin-bottom: 0.2rem; }
+    .form-card .form-sub { font-size: 0.78rem; color: var(--orange); font-weight: 700; margin-bottom: 0.6rem; font-style: italic; }
+    .form-card p { font-size: 0.83rem; color: var(--gray); line-height: 1.55; }
+    .form-card .form-purpose {
+      margin-top: 0.75rem;
+      font-size: 0.72rem;
+      color: rgba(160,160,176,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 0.6rem;
+    }
+    .brand-principle {
+      background: rgba(255,107,26,0.06);
+      border: 1px solid rgba(255,107,26,0.2);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .brand-principle h3 {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--orange);
+      margin-bottom: 1rem;
+    }
+    .brand-principle p {
+      font-size: 0.95rem;
+      color: #bbb;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .forms-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.2rem;
+    }
+    .forms-chip {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.9rem;
+      border-radius: 100px;
+      border: 1px solid rgba(255,107,26,0.3);
+      color: var(--orange);
+      background: rgba(255,107,26,0.08);
+    }
+
+    /* MERCH SECTION */
+    .merch-section {
+      background: #000;
+      padding: 5rem 1.5rem;
+      border-top: 1px solid #1a1a1a;
+      text-align: center;
+    }
+    .merch-inner { max-width: 900px; margin: 0 auto; }
+    .merch-header .section-tag { color: var(--orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem; display: block; }
+    .merch-header h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 0.75rem; }
+    .merch-header p { color: var(--gray); font-size: 1rem; max-width: 540px; margin: 0 auto 3rem; line-height: 1.7; }
+    .merch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 3rem;
+    }
+    .merch-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .merch-card:hover { border-color: rgba(255,107,26,0.4); transform: translateY(-4px); }
+    .merch-card .merch-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .merch-card h3 { font-size: 1rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .merch-card p { font-size: 0.85rem; color: var(--gray); line-height: 1.5; }
+    .merch-card .coming-soon {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: rgba(255,107,26,0.15);
+      color: var(--orange);
+      border: 1px solid rgba(255,107,26,0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 100px;
+    }
+    .merch-dress-code {
+      background: rgba(255,107,26,0.06);
+      border: 1px solid rgba(255,107,26,0.2);
+      border-radius: 14px;
+      padding: 2rem;
+      text-align: left;
+      max-width: 620px;
+      margin: 0 auto 2.5rem;
+    }
+    .merch-dress-code h3 {
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1rem;
+    }
+    .dress-rule {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      color: #ccc;
+      line-height: 1.5;
+      align-items: flex-start;
+    }
+    .dress-rule .dr-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .dress-rule strong { color: var(--white); }
+    .merch-notify-box {
+      background: rgba(255,107,26,0.08);
+      border: 1px solid rgba(255,107,26,0.25);
+      border-radius: 14px;
+      padding: 2rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .merch-notify-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .merch-notify-box p { font-size: 0.88rem; color: var(--gray); margin-bottom: 1.2rem; }
+    .notify-row { display: flex; gap: 0.5rem; }
+    .notify-row input {
+      flex: 1;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--white);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .notify-row input::placeholder { color: rgba(160,160,176,0.5); }
+    .notify-row input:focus { border-color: var(--orange); }
+    .notify-row button {
+      background: var(--orange);
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 1.2rem;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .notify-row button:hover { background: var(--orange-dark); }
+
+    /* MISSION & RULES */
+    .mission-section {
+      background: #0a0a0a;
+      padding: 5rem 1.5rem;
+      border-top: 1px solid #1a1a1a;
+    }
+    .mission-inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .mission-statement {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+    .mission-statement .section-tag { color: var(--orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1rem; display: block; }
+    .mission-statement h2 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.15; letter-spacing: -1px; margin-bottom: 1.5rem; }
+    .mission-statement h2 em { color: var(--orange); font-style: normal; }
+    .mission-quote {
+      font-size: 1.1rem;
+      color: #aaa;
+      line-height: 1.8;
+      max-width: 660px;
+      margin: 0 auto 2rem;
+    }
+    .mission-pillars-row {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 2.5rem;
+    }
+    .mission-pillar-chip {
+      background: rgba(255,107,26,0.1);
+      border: 1px solid rgba(255,107,26,0.25);
+      border-radius: 100px;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: 1px;
+    }
+
+    .rules-block { margin-bottom: 3.5rem; }
+    .rules-block h3 {
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .rule-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid #111;
+      align-items: flex-start;
+    }
+    .rule-num {
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,107,26,0.15);
+      border: 1px solid rgba(255,107,26,0.3);
+      color: var(--orange);
+      font-size: 0.72rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .rule-text { font-size: 0.92rem; color: #ccc; line-height: 1.6; }
+    .rule-text strong { color: var(--white); }
+    .rule-text .tag {
+      display: inline-block;
+      background: rgba(255,107,26,0.12);
+      color: var(--orange);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.3rem;
+      vertical-align: middle;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.82rem;
+      color: var(--gray);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    footer span { color: var(--orange); }
+    /* ── SORTING TRIGGER ── */
+    .sorting-trigger { margin-bottom: 1rem; }
+    .sorting-locked-notice { background: rgba(150,50,220,0.06); border: 1px solid rgba(150,50,220,0.2); border-radius: 14px; padding: 1.5rem; text-align: center; }
+    .sorting-lock-icon { font-size: 1.8rem; display: block; margin-bottom: 0.5rem; }
+    .sorting-label { font-size: 0.95rem; font-weight: 800; display: block; margin-bottom: 0.35rem; color: var(--white); }
+    .sorting-sub { font-size: 0.8rem; color: var(--gray); margin-bottom: 1.2rem; line-height: 1.5; display: block; }
+    .btn-begin-sorting { width: 100%; background: linear-gradient(135deg, #9632DC, #6B21A8); border: none; border-radius: 10px; padding: 0.9rem; color: #fff; font-size: 0.95rem; font-weight: 800; cursor: pointer; font-family: inherit; letter-spacing: 0.5px; transition: opacity 0.2s, transform 0.1s; }
+    .btn-begin-sorting:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-begin-sorting:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+    .sorting-complete { background: rgba(0,200,100,0.06); border: 1px solid rgba(0,200,100,0.25); border-radius: 14px; padding: 1.2rem; text-align: center; }
+    .sorting-done-icon-small { font-size: 1.8rem; display: block; margin-bottom: 0.4rem; }
+    .sorting-done-text { font-size: 0.88rem; color: #00C864; font-weight: 700; }
+    .minigame-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 500; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+    .minigame-overlay.active { display: flex; }
+    .mg-container { width: 100%; max-width: 480px; }
+    .mg-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .mg-progress { flex: 1; }
+    .mg-round-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); display: block; margin-bottom: 0.4rem; }
+    .mg-progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .mg-progress-fill { height: 100%; background: var(--orange); border-radius: 2px; transition: width 0.3s ease; }
+    .mg-timer { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,107,26,0.15); border: 2px solid rgba(255,107,26,0.4); color: var(--orange); font-size: 1.1rem; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mg-timer.urgent { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.15); }
+    .mg-category { text-align: center; font-size: 0.72rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); margin-top: 1.5rem; }
+    .mg-color-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.6rem; }
+    .mg-color-swatch { height: 64px; border-radius: 12px; cursor: pointer; border: 3px solid transparent; transition: transform 0.15s, border-color 0.15s; }
+    .mg-color-swatch:hover { transform: scale(1.06); }
+    .mg-color-swatch.picked { border-color: #fff; transform: scale(1.08); }
+    .mg-choice-grid { display: grid; gap: 0.75rem; }
+    .mg-choice-grid.four { grid-template-columns: 1fr 1fr; }
+    .mg-choice-grid.five { grid-template-columns: 1fr 1fr; }
+    .mg-choice-btn { background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.1rem 0.75rem; cursor: pointer; color: var(--white); font-family: inherit; transition: all 0.15s; text-align: center; }
+    .mg-choice-btn:hover { border-color: rgba(255,107,26,0.5); background: rgba(255,107,26,0.08); }
+    .mg-choice-btn.picked { border-color: var(--orange); background: rgba(255,107,26,0.15); }
+    .mg-choice-btn.wildcard { border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.04); }
+    .mg-choice-btn.wildcard.picked { border-color: #FFD700; background: rgba(255,215,0,0.15); }
+    .mg-choice-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+    .mg-choice-name { font-size: 0.85rem; font-weight: 800; }
+    .mg-wheel-wrap { text-align: center; }
+    .mg-wheel-canvas { display: block; margin: 0 auto 1.2rem; border-radius: 50%; }
+    .mg-lever-btn { width: 100%; background: var(--orange); border: none; border-radius: 12px; padding: 1rem; color: #fff; font-size: 1rem; font-weight: 900; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+    .mg-lever-btn:hover { opacity: 0.88; }
+    .mg-lever-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .mg-wheel-result { display: none; font-size: 1.4rem; font-weight: 900; color: var(--orange); margin-top: 0.75rem; }
+    .sorting-done-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 501; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+    .sorting-done-overlay.active { display: flex; }
+    .sd-big-icon { font-size: 4rem; margin-bottom: 1.5rem; animation: sdpulse 1.5s ease-in-out infinite; }
+    @keyframes sdpulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+    .sd-title { font-size: clamp(1.6rem,5vw,2.4rem); font-weight: 900; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .sd-sub { font-size: 0.95rem; color: var(--gray); max-width: 360px; line-height: 1.6; margin-bottom: 2rem; }
+    .sd-sub strong { color: var(--orange); }
+    .btn-sd-close { background: var(--orange); border: none; border-radius: 12px; padding: 0.9rem 2.5rem; color: #fff; font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="pw-gate">
+  <div class="pw-logo">Hooper<span>Quest32</span></div>
+  <p>Early access — enter password to continue</p>
+  <input type="password" id="pw-input" placeholder="Password" autocomplete="off" />
+  <button onclick="checkPW()">Enter</button>
+  <div class="pw-error" id="pw-error"></div>
+</div>
+
+<script>
+  (function() {
+    var PW = 'hq32@Flickpark';
+    if (sessionStorage.getItem('hq32_access') === '1') {
+      document.getElementById('pw-gate').classList.add('hidden');
+    }
+    window.checkPW = function() {
+      var val = document.getElementById('pw-input').value;
+      if (val === PW) {
+        sessionStorage.setItem('hq32_access', '1');
+        document.getElementById('pw-gate').classList.add('hidden');
+      } else {
+        document.getElementById('pw-error').textContent = 'Wrong password. Try again.';
+        document.getElementById('pw-input').value = '';
+        document.getElementById('pw-input').focus();
+      }
+    };
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !document.getElementById('pw-gate').classList.contains('hidden')) {
+        checkPW();
+      }
+    });
+  })();
+</script>
+
+<nav>
+  <div class="logo">Hooper<span>Quest</span>32</div>
+  <div style="display:flex;gap:1.5rem;align-items:center;">
+    <a href="#guilds">Guilds</a>
+    <a href="#mission">Mission</a>
+    <a href="#merch">Merch</a>
+    <a href="#faq">FAQ</a>
+    <a href="#contact">Contact</a>
+    <a href="#signup" style="background:var(--orange);color:#fff;padding:0.4rem 1rem;border-radius:8px;font-weight:700;">Sign Up</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <span class="ball-emoji">🏀</span>
+    <div class="badge">Season 1 Registration Open</div>
+    <h1>The <span class="highlight">Possession</span><br>is Finite.<br>The Quest is Not.</h1>
+    <p>Every possession is an opportunity to compound your growth. Sign up now — once we have enough players, teams form and the quest begins.</p>
+
+    <!-- SIGNUP FORM -->
+    <div class="signup-box" id="signup">
+      <h2>Count Me In</h2>
+      <p>Drop your info — no commitment, just interest.</p>
+
+      <form id="signupForm">
+        <div class="form-row">
+          <input type="text" id="firstName" placeholder="First name (or alias)" required />
+          <input type="text" id="lastName" placeholder="Last name (optional)" />
+        </div>
+        <div class="form-row" style="margin-bottom:0.3rem;">
+          <input type="email" id="email" placeholder="Email address" required />
+        </div>
+        <div style="font-size:0.72rem;color:rgba(160,160,176,0.5);margin-bottom:0.75rem;text-align:left;padding:0 0.2rem;">
+          🔒 Privacy respected — you can use an alias instead of your real name. Your email is private and only used for league communications. A permanent <strong style="color:rgba(255,255,255,0.4)">Player ID</strong> will be assigned to you at signup.
+        </div>
+        <div class="format-picker">
+          <button type="button" class="format-btn" id="btn3v3" onclick="selectFormat('3v3')">3v3</button>
+          <button type="button" class="format-btn" id="btn4v4" onclick="selectFormat('4v4')">4v4</button>
+        </div>
+        <div class="format-label">Choose your format</div>
+        <!-- AGE GATE -->
+        <div class="age-field">
+          <label>Date of Birth <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(160,160,176,0.5)">— must be 15 or older to join</span></label>
+          <input type="date" id="playerDOB" onchange="checkAge()" required/>
+        </div>
+        <div class="age-warning" id="ageWarning">
+          ⛔ You must be at least <strong>15 years old</strong> to join HooperQuest32. Players under 13 are not eligible. If you believe this is an error, contact The Keeper at hello@hooperquest32.com.
+        </div>
+        <div class="minor-notice" id="minorNotice">
+          👋 Since you're under 18, a <strong style="color:#FFD700">parent or guardian must consent</strong> before your registration is complete. You'll be prompted to provide their details after submitting this form.
+        </div>
+
+        <!-- GUILD SORTING TRIGGER -->
+        <div class="sorting-trigger" id="sortingTrigger">
+          <div class="sorting-locked-notice" id="sortingLockedNotice">
+            <span class="sorting-lock-icon">🔮</span>
+            <span class="sorting-label">Your guild is not chosen. It is revealed.</span>
+            <span class="sorting-sub">Complete a 5-round instinct game — under 30 seconds. The court decides your guild. You will find out on Draft Day.</span>
+            <button type="button" class="btn-begin-sorting" id="btnBeginSorting" onclick="launchMiniGame()">Begin Your Sorting ⚡</button>
+          </div>
+          <div class="sorting-complete" id="sortingComplete" style="display:none">
+            <span class="sorting-done-icon-small">✅</span>
+            <p class="sorting-done-text">Sorting complete. Your guild will be revealed on Draft Day.</p>
+            <input type="hidden" id="hiddenGuildResult" name="guildResult" value=""/>
+          </div>
+        </div>
+
+
+        <div style="margin-top:1rem;margin-bottom:0.25rem;">
+          <div class="consent-row">
+            <input type="checkbox" id="chkConduct" required/>
+            <label for="chkConduct">I have read and agree to the <a onclick="openModal('conductModal')">HQ32 Code of Conduct & Rules</a>. I understand that trash talk, attitude, and fighting are not tolerated.</label>
+          </div>
+          <div class="consent-row">
+            <input type="checkbox" id="chkMedia" required/>
+            <label for="chkMedia">I consent to being <a onclick="openModal('mediaModal')">recorded on video</a> during games. I understand my footage may appear in season highlights and social media posts under the HooperQuest32 brand.</label>
+          </div>
+          <div class="consent-row">
+            <input type="checkbox" id="chkLiability" required/>
+            <label for="chkLiability">I have read and accept the <a onclick="openModal('liabilityModal')">Liability Waiver</a>. I understand that I participate voluntarily and assume all risks of physical injury.</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-signup">🏀 Join the Quest</button>
+      </form>
+
+      <div class="success-msg" id="successMsg">
+        <div class="check">✅</div>
+        <h3>You're on the list!</h3>
+        <p>We'll reach out when enough players have signed up and teams are ready to form. Stay ready.</p>
+        <a id="viewCardBtn" href="playercard.html" style="display:inline-block;margin-top:1rem;background:var(--orange);color:#fff;text-decoration:none;padding:0.75rem 1.8rem;border-radius:10px;font-size:0.9rem;font-weight:800;transition:background 0.2s;" onmouseover="this.style.background='#e05a0e'" onmouseout="this.style.background='var(--orange)'">
+          🏀 View My Player Card
+        </a>
+      </div>
+
+      <div class="team-counter">
+        <strong id="playerCount">—</strong> players signed up &nbsp;·&nbsp; <strong id="teamCount">—</strong> teams possible
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><span class="num">3v3 / 4v4</span><span class="label">Format</span></div>
+  <div class="stat"><span class="num">32</span><span class="label">Max Teams</span></div>
+  <div class="stat"><span class="num">$0</span><span class="label">To Sign Up</span></div>
+  <div class="stat"><span class="num">100%</span><span class="label">Pure Hoops</span></div>
+</div>
+
+<!-- PHILOSOPHY -->
+<section class="philosophy">
+  <div class="formula">
+    <div class="formula-hq"><span class="f-white">HQ</span><span class="f-orange">32</span></div>
+    <div class="formula-eq">=</div>
+    <div class="formula-paren">(</div>
+    <div class="formula-e">e</div>
+    <div class="formula-ball">🏀</div>
+    <div class="formula-paren">)</div>
+    <div class="formula-pi">π</div>
+  </div>
+  <div class="philosophy-subtitle">HOOPER QUEST 32</div>
+  <div class="philosophy-divider"></div>
+  <div class="pillars">
+    <div class="pillar">
+      <span class="pillar-icon orange-text">HQ32</span>
+      <h4>The System</h4>
+      <p>HooperQuest32. The philosophy. The standard. Every rep, every possession, every game.</p>
+    </div>
+    <div class="pillar">
+      <span class="pillar-icon serif-e">e</span>
+      <h4>Compounding Growth</h4>
+      <p>Small improvements compounded possession after possession. Growth is exponential when you show up every time.</p>
+    </div>
+    <div class="pillar">
+      <span class="pillar-icon">🏀</span>
+      <h4>The Possession</h4>
+      <p>Every possession is a finite window — 32 seconds — and an unlimited opportunity to create growth. Use it.</p>
+    </div>
+    <div class="pillar">
+      <span class="pillar-icon serif-pi">π</span>
+      <h4>Infinite Pursuit</h4>
+      <p>π never ends. Neither does the pursuit of mastery. There is always another level to reach.</p>
+    </div>
+    <div class="pillar">
+      <span class="pillar-icon orange-text" style="font-size:1.2rem">32</span>
+      <h4>The Present Possession</h4>
+      <p>32 seconds. Finite. Right now. The only moment that exists is the one you're in. Make it count.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem;font-size:0.82rem;color:#555;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.8;border-top:1px solid #111;padding-top:2rem;">
+    <em style="color:#888;">"Every basketball possession compounds growth in the endless pursuit of mastery."</em>
+  </div>
+
+  <div class="philosophy-tagline">
+    ONE POSSESSION. &nbsp;<span class="t-orange">INFINITE GROWTH.</span>&nbsp; ENDLESS PURSUIT.
+  </div>
+</section>
+
+<!-- SEVEN FORMS -->
+<section class="seven-forms">
+  <div class="seven-forms-inner">
+    <div class="seven-forms-header">
+      <span class="section-tag">The Brand System</span>
+      <h2>The Seven Forms of HQ32</h2>
+      <p>These are not competing logos. They are seven archetypes expressing different aspects of the same philosophy. Together they form a complete identity system.</p>
+    </div>
+
+    <div class="forms-grid">
+      <div class="form-card">
+        <span class="form-num">Form 01</span>
+        <h3>Coach Style</h3>
+        <div class="form-sub">Handwritten Equation</div>
+        <p>Whiteboard, notebook, gym session, learning. The origin story. Raw, intelligent, coach energy — where the philosophy was first written down.</p>
+        <div class="form-purpose">Purpose: Origin story & coaching collection</div>
+      </div>
+      <div class="form-card">
+        <span class="form-num">Form 02</span>
+        <h3>Brand Style</h3>
+        <div class="form-sub">Large HQ32 Wordmark</div>
+        <p>Bold identity. Team, apparel, community. The equation as philosophy. The primary commercial face of HooperQuest32.</p>
+        <div class="form-purpose">Purpose: Primary commercial logo</div>
+      </div>
+      <div class="form-card">
+        <span class="form-num">Form 03</span>
+        <h3>Quest Style</h3>
+        <div class="form-sub">Hidden Equation — Front & Back</div>
+        <p>HQ32 on front. The full equation on the back. Discovery and deeper meaning. Wear the identity, reveal the philosophy.</p>
+        <div class="form-purpose">Purpose: Lifestyle apparel</div>
+      </div>
+      <div class="form-card">
+        <span class="form-num">Form 04</span>
+        <h3>Icon Style</h3>
+        <div class="form-sub">Minimalist Symbol</div>
+        <p>Less is more. Iconic. Timeless. The recognition mark — built for patches, app icons, hats, stickers, and anywhere the full name doesn't fit.</p>
+        <div class="form-purpose">Purpose: Recognition mark & patch</div>
+      </div>
+      <div class="form-card">
+        <span class="form-num">Form 05</span>
+        <h3>Mystery Style</h3>
+        <div class="form-sub">No Equals Sign</div>
+        <p>Mysterious. Open to interpretation. The equation without resolution — because the pursuit never ends and the answer is never final.</p>
+        <div class="form-purpose">Purpose: Artistic collection</div>
+      </div>
+      <div class="form-card">
+        <span class="form-num">Form 06</span>
+        <h3>Warrior Style</h3>
+        <div class="form-sub">Bruce Lee Version</div>
+        <p>Simplicity. Focus. Warrior mentality. Minimal, disciplined, precise. Inspired by the philosophy that mastery lives in reduction — not addition.</p>
+        <div class="form-purpose">Purpose: Premium minimalist apparel</div>
+      </div>
+      <div class="form-card">
+        <span class="form-num">Form 07</span>
+        <h3>Engineer Style</h3>
+        <div class="form-sub">Blueprint Version</div>
+        <p>Precision. Blueprint. Built different. A system diagram of the HQ32 philosophy — for the thinkers, builders, and collectors who see the architecture behind the game.</p>
+        <div class="form-purpose">Purpose: Limited edition & collector designs</div>
+      </div>
+    </div>
+
+    <div class="brand-principle">
+      <h3>The Brand Principle</h3>
+      <p>HQ32 is not just a basketball league. It is a personal growth philosophy expressed through sport. Growth compounds through action. Time is limited. Every possession matters. Mastery is never finished. The quest never ends.</p>
+      <p style="font-size:0.82rem;color:#666;font-style:italic;">"The Seven Forms are not competing logos — they are seven archetypes of the same truth."</p>
+      <div class="forms-chips">
+        <span class="forms-chip">Coach</span>
+        <span class="forms-chip">Brand</span>
+        <span class="forms-chip">Quest</span>
+        <span class="forms-chip">Icon</span>
+        <span class="forms-chip">Mystery</span>
+        <span class="forms-chip">Warrior</span>
+        <span class="forms-chip">Engineer</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GUILDS SECTION -->
+<section class="guilds-section" id="guilds">
+  <div class="guilds-inner">
+
+    <div class="guilds-header">
+      <span class="section-tag">Season 1</span>
+      <h2>Your Guild Awaits.</h2>
+      <p>Four guilds. One quest. Every player is sorted by instinct — your guild is your identity, your banner, your community within HooperQuest32. Revealed on Draft Day.</p>
+    </div>
+    <div class="keeper-note">Overseen by <span>The Keeper</span> · Min. 5 players to activate a guild · Max 3 captains per guild</div>
+
+    <div class="guilds-grid">
+
+      <!-- THE SHARPENED -->
+      <div class="guild-full-card sharpened">
+        <span class="guild-big-emblem">⚔️</span>
+        <div class="guild-form-tag">Form 06 · Warrior</div>
+        <div class="guild-full-name">The Sharpened</div>
+        <p class="guild-desc">Discipline. Focus. Precision. The Sharpened don't rely on flash — they rely on preparation. Every rep sharpens the blade. Every possession is practice. They show up ready because they never stopped working.</p>
+        <div class="guild-identity">"One weapon. Mastered. Repeated forever."</div>
+        <div class="guild-stats-row">
+          <span><strong id="s-count">0</strong>Members</span>
+          <span><strong id="s-squads">0</strong>Squads</span>
+          <span><strong id="s-spots">5</strong>Min to activate</span>
+        </div>
+        <button class="guild-join-btn" onclick="joinGuildScroll('sharpened')">Enter The Sorting ⚡</button>
+      </div>
+
+      <!-- THE SEEKERS -->
+      <div class="guild-full-card seekers">
+        <span class="guild-big-emblem">🧭</span>
+        <div class="guild-form-tag">Form 03 · Quest</div>
+        <div class="guild-full-name">The Seekers</div>
+        <p class="guild-desc">Relentless. Restless. Always chasing the next level. The Seekers are never satisfied — not with a win, not with their game, not with their growth. The compass never stops pointing forward. The quest never ends.</p>
+        <div class="guild-identity">"The answer is always one more possession away."</div>
+        <div class="guild-stats-row">
+          <span><strong id="q-count">0</strong>Members</span>
+          <span><strong id="q-squads">0</strong>Squads</span>
+          <span><strong id="q-spots">5</strong>Min to activate</span>
+        </div>
+        <button class="guild-join-btn" onclick="joinGuildScroll('seekers')">Enter The Sorting ⚡</button>
+      </div>
+
+      <!-- THE ARCHITECTS -->
+      <div class="guild-full-card architects">
+        <span class="guild-big-emblem">⚙️</span>
+        <div class="guild-form-tag">Form 07 · Engineer</div>
+        <div class="guild-full-name">The Architects</div>
+        <p class="guild-desc">System thinkers. IQ players. The Architects see the game as a blueprint — every play is a calculation, every rotation is by design. They don't react to the game. They build it. The gear turns the key that unlocks everything.</p>
+        <div class="guild-identity">"We don't play the game. We solve it."</div>
+        <div class="guild-stats-row">
+          <span><strong id="a-count">0</strong>Members</span>
+          <span><strong id="a-squads">0</strong>Squads</span>
+          <span><strong id="a-spots">5</strong>Min to activate</span>
+        </div>
+        <button class="guild-join-btn" onclick="joinGuildScroll('architects')">Enter The Sorting ⚡</button>
+      </div>
+
+      <!-- THE UNKNOWN -->
+      <div class="guild-full-card unknown">
+        <span class="guild-big-emblem">👁️</span>
+        <div class="guild-form-tag">Form 05 · Mystery</div>
+        <div class="guild-full-name">The Unknown</div>
+        <p class="guild-desc">Unpredictable. Creative. Impossible to gameplan for. The Unknown watches everything and reveals nothing. The eye sees all. The spiral goes everywhere. By the time you think you understand them — they've already changed.</p>
+        <div class="guild-identity">"Watching everything. Known by no one."</div>
+        <div class="guild-stats-row">
+          <span><strong id="u-count">0</strong>Members</span>
+          <span><strong id="u-squads">0</strong>Squads</span>
+          <span><strong id="u-spots">5</strong>Min to activate</span>
+        </div>
+        <button class="guild-join-btn" onclick="joinGuildScroll('unknown')">Enter The Sorting ⚡</button>
+      </div>
+
+    </div>
+
+    <!-- HIERARCHY -->
+    <div class="guild-hierarchy">
+      <h3>⚔️ Guild Structure</h3>
+      <div class="hierarchy-row">
+        <div class="hierarchy-icon">🏛️</div>
+        <div class="hierarchy-info">
+          <div class="h-tag">League Authority</div>
+          <h4>The Keeper</h4>
+          <p>Oversees all guilds. Approves squad names. Opens and closes the draft. Enforces the code. The quest exists because The Keeper maintains it.</p>
+        </div>
+      </div>
+      <div class="hierarchy-row">
+        <div class="hierarchy-icon">👑</div>
+        <div class="hierarchy-info">
+          <div class="h-tag">Guild Founder</div>
+          <h4>Guild Owner</h4>
+          <p>Creates the guild. Owns the banner. Assigns up to 3 captains. Can play or manage from the sideline. Final authority within the guild. Minimum 10 players to field multiple squads.</p>
+        </div>
+      </div>
+      <div class="hierarchy-row">
+        <div class="hierarchy-icon">⚡</div>
+        <div class="hierarchy-info">
+          <div class="h-tag">Squad Leader</div>
+          <h4>Captain</h4>
+          <p>Drafts and leads a squad on the court. Max 3 captains per guild. Each captain names their squad — clean names only, subject to Keeper approval.</p>
+        </div>
+      </div>
+      <div class="hierarchy-row">
+        <div class="hierarchy-icon">🏀</div>
+        <div class="hierarchy-info">
+          <div class="h-tag">Guild Member</div>
+          <h4>Player</h4>
+          <p>Chooses their guild at signup. Gets drafted to a squad by a captain. Represents the guild banner every game. Minimum 5 players to activate a guild for Season 1.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GUILD GROWTH TEASER -->
+    <div style="text-align:center;margin-top:2.5rem;padding-top:2.5rem;border-top:1px solid rgba(255,255,255,0.06);">
+      <p style="font-size:0.75rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--orange);margin-bottom:0.6rem;">The League Grows With You</p>
+      <p style="font-size:0.88rem;color:var(--gray);max-width:480px;margin:0 auto;line-height:1.7;">New guilds unlock when the player base grows. If Season 2 signups hit the threshold, a new Form activates — one guild per season, earned by the community.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- GUILD GROWTH -->
+<section class="guild-formation" id="found-guild">
+  <div class="guild-formation-inner">
+
+    <div class="guild-formation-header">
+      <span class="section-tag">Season 2 & Beyond</span>
+      <h2>The League Expands.</h2>
+      <p>Guilds are the heart of HooperQuest32. Every guild starts with one founder who believes enough to build something from nothing. Here's how it works.</p>
+    </div>
+
+    <div class="s2-banner">
+      <span class="s2-pill">How It Works</span>
+      <span>New guilds don't get created — they get <strong>earned</strong>. When signups hit the threshold, the next Form activates. One new guild per season, unlocked by the community.</span>
+    </div>
+
+    <!-- 5 STEPS -->
+    <div class="formation-steps">
+      <div class="formation-step">
+        <div class="step-num">1</div>
+        <span class="step-icon">🏀</span>
+        <h4>Season 1 — 4 Guilds</h4>
+        <p>The 4 founding guilds are active. Every player is sorted by instinct. The quest begins here.</p>
+      </div>
+      <div class="formation-step">
+        <div class="step-num">2</div>
+        <span class="step-icon">📈</span>
+        <h4>Threshold Hit</h4>
+        <p>If Season 2 signups hit the player threshold, The Keeper activates the next Form. One new guild — earned by the community, not requested by individuals.</p>
+      </div>
+      <div class="formation-step">
+        <div class="step-num">3</div>
+        <span class="step-icon">🔮</span>
+        <h4>New Form Activates</h4>
+        <p>The new guild enters the sorting pool. New players can be assigned to it. The league grows, the quest deepens. Up to 7 guilds total across 7 seasons.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:16px;padding:2rem;">
+      <div style="font-size:2rem;margin-bottom:0.75rem;">👁️</div>
+      <p style="font-size:0.75rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FFD700;margin-bottom:0.5rem;">7 Forms. 7 Seasons.</p>
+      <p style="font-size:0.9rem;color:var(--gray);max-width:480px;margin:0 auto;line-height:1.7;">The remaining Forms are already designed. They don't get created — they get unlocked. Show up, grow the community, and the next guild reveals itself.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- MERCH SECTION -->
+<section class="merch-section" id="merch">
+  <div class="merch-inner">
+    <div class="merch-header">
+      <span class="section-tag">👕 Gear Up</span>
+      <h2>Rep the Brand.<br>Look Like a Unit.</h2>
+      <p>Uniform is required to play. Every player on the court must wear the same shirt color and design as their team — with the <strong style="color:var(--white)">HQ32 logo</strong> on it. No exceptions.</p>
+    </div>
+
+    <!-- DRESS CODE -->
+    <div class="merch-dress-code">
+      <h3>👕 Dress Code — Required to Play</h3>
+      <div class="dress-rule"><span class="dr-icon">✅</span><div><strong>Same shirt color per team.</strong> All players on the same team must wear matching shirt colors. Teams will be assigned a color at registration.</div></div>
+      <div class="dress-rule"><span class="dr-icon">✅</span><div><strong>HQ32 logo required.</strong> Every player must have the HQ32 logo on their shirt — either purchased through our merch shop or applied via an official HQ32 iron-on patch.</div></div>
+      <div class="dress-rule"><span class="dr-icon">✅</span><div><strong>Making your own shirt?</strong> No problem. You can get your shirt made anywhere — just order an <strong>HQ32 iron-on patch</strong> from our shop and apply it yourself.</div></div>
+      <div class="dress-rule"><span class="dr-icon">❌</span><div><strong>No uniform = no play.</strong> Players without the correct team shirt and HQ32 logo will not be permitted to participate until the issue is resolved.</div></div>
+    </div>
+
+    <!-- MERCH ITEMS — 7 COLLECTIONS -->
+    <p style="font-size:0.78rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);text-align:center;margin-bottom:1.5rem;">7 Collections · 1 Philosophy</p>
+    <div class="merch-grid">
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">✏️</span>
+        <h3>Coach Collection</h3>
+        <p>Handwritten equation. Whiteboard energy. The origin story on a tee.</p>
+      </div>
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">🏷️</span>
+        <h3>Brand Collection</h3>
+        <p>The bold HQ32 wordmark. Team shirts, apparel, and everyday wear. Primary commercial line.</p>
+      </div>
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">🔍</span>
+        <h3>Quest Collection</h3>
+        <p>HQ32 on the front. The full equation on the back. Wear the identity, reveal the philosophy.</p>
+      </div>
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">🔖</span>
+        <h3>Icon Collection</h3>
+        <p>Minimalist symbol. Patches, hats, caps, stickers. The league-approved iron-on patch lives here.</p>
+      </div>
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">🌀</span>
+        <h3>Mystery Collection</h3>
+        <p>The equation without the equals sign. Open to interpretation. Artistic and limited.</p>
+      </div>
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">⚔️</span>
+        <h3>Warrior Collection</h3>
+        <p>Minimal. Disciplined. Precision-focused. Premium apparel for those who understand mastery.</p>
+      </div>
+      <div class="merch-card">
+        <span class="coming-soon">Coming Soon</span>
+        <span class="merch-icon">📐</span>
+        <h3>Engineer Collection</h3>
+        <p>Blueprint design. System diagram. Limited edition collector pieces for those who see the architecture.</p>
+      </div>
+    </div>
+
+    <!-- NOTIFY -->
+    <div class="merch-notify-box">
+      <h3>🛒 Shop Opening Soon</h3>
+      <p>Drop your email and we'll notify you the moment the HQ32 merch shop goes live.</p>
+      <div class="notify-row">
+        <input type="email" id="notifyEmail" placeholder="Your email address"/>
+        <button onclick="notifyMe()">Notify Me</button>
+      </div>
+      <p id="notifyConfirm" style="display:none;margin-top:0.75rem;font-size:0.85rem;color:var(--orange);font-weight:700;">✅ You're on the list!</p>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION & RULES -->
+<section class="mission-section" id="mission">
+  <div class="mission-inner">
+
+    <!-- MISSION STATEMENT -->
+    <div class="mission-statement">
+      <span class="section-tag">Our Mission</span>
+      <h2>More Than a League.<br><em>A Philosophy.</em></h2>
+      <p class="mission-quote">
+        HooperQuest32 is a basketball league and a personal growth philosophy expressed through sport.
+        We exist for every player who understands that the game is bigger than any single win —
+        that growth compounds through action, time is limited, and every possession is a finite window to become better.
+        <br><br>
+        We built this for the community. The grinders. The ones who show up, compete with class, and pursue mastery without an end date.
+        No trash talk. No ego. Just ball, growth, and the relentless, infinite pursuit.
+        <br><br>
+        <strong style="color:#f5f5f5">The possession is finite. The quest is not.</strong>
+      </p>
+      <div class="mission-pillars-row">
+        <span class="mission-pillar-chip">🏀 Compete</span>
+        <span class="mission-pillar-chip">📈 Grow</span>
+        <span class="mission-pillar-chip">🤝 Community</span>
+        <span class="mission-pillar-chip">🔥 Love the Game</span>
+      </div>
+    </div>
+
+    <!-- GAME RULES -->
+    <div class="rules-block">
+      <h3>🕐 Game Format & Timing</h3>
+      <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><strong>Formats available:</strong> 3v3 and 4v4. Players select their format at signup. 4v4 is the default — if one or both teams are short, the game drops to 3v3.</div></div>
+      <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><strong>Game structure:</strong> All games are played in <strong>2 halves of 10 minutes each</strong>. 3-minute halftime break between halves.</div></div>
+      <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><strong>Shot clock:</strong> Each possession is <strong>32 seconds</strong>. Failure to attempt a shot before the clock expires results in a turnover.</div></div>
+      <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><strong>Tiebreaker — Shootout:</strong> If the score is tied at the end of regulation, every player (active + sub) shoots <strong>one shot each from beyond the arc</strong>. Team with the most makes wins. <span class="tag">3v3 = 4 shooters per team</span> <span class="tag">4v4 = 5 shooters per team</span> — If still tied: <strong>sudden death</strong> — one shooter each, alternating, until one makes and the other misses.</div></div>
+    </div>
+
+    <!-- FOUL RULES -->
+    <div class="rules-block">
+      <h3>⚖️ Foul System</h3>
+      <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><strong>Free foul calls:</strong> Each player is granted <strong>3 free foul calls</strong> per game. These are accepted without challenge — no questions asked.</div></div>
+      <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><strong>Challenge threshold:</strong> Once a player has used all 3 free foul calls, any foul call from the <strong>4th foul onward</strong> may be challenged by the defensive player.</div></div>
+      <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><strong>How a challenge works:</strong> If the defensive player (Player B) disagrees with the foul called by the offensive player (Player A), Player B may declare a challenge. Player B then selects <strong>any one player from Player A's team</strong> to attempt a 3-point shot from behind the arc.</div></div>
+      <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><strong>Challenge — Shot made:</strong> If the selected shooter <strong>makes</strong> the 3-pointer, the challenge fails. Player A's team <strong>retains possession</strong>. The shot clock resets to whichever is greater: the <strong>remaining time on the clock</strong> or a <strong>minimum reset of 20 seconds</strong>.<br><em style="color:#666;font-size:0.82rem">Example: foul called at 21 sec → keep 21 sec. Foul called at 3 sec → reset to 20 sec.</em></div></div>
+      <div class="rule-item"><div class="rule-num">5</div><div class="rule-text"><strong>Challenge — Shot missed:</strong> If the selected shooter <strong>misses</strong> the 3-pointer, the challenge succeeds. The foul call is overturned. Player B's team <strong>gains possession</strong> with a <strong>fresh 32-second shot clock</strong>. This is treated as a turnover.</div></div>
+      <div class="rule-item"><div class="rule-num">6</div><div class="rule-text"><strong>Protecting against abuse:</strong> To prevent teams from exploiting players who cannot shoot from distance, the defensive team may only select the <strong>same player a maximum of 2 times</strong> per game as the challenge shooter, and <strong>never back-to-back</strong>.</div></div>
+      <div class="rule-item"><div class="rule-num">7</div><div class="rule-text"><strong>Foul out rule:</strong> A player who reaches <strong>6 fouls</strong> must sit out for <strong>1 full possession (32 seconds)</strong>. If the team has no eligible substitutes, the player sits the full possession before returning.</div></div>
+    </div>
+
+    <!-- MINOR POLICY -->
+    <div class="rules-block">
+      <h3>👨‍👩‍👧 Minor Participant Policy</h3>
+      <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><strong>Minimum age is 15.</strong> Players must be at least 15 years old to register and participate in HooperQuest32. Players under 15 will not be accepted regardless of skill level or parental permission.</div></div>
+      <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><strong>Under-13 hard block.</strong> In compliance with COPPA (Children's Online Privacy Protection Act), no personal data is collected from players under 13 years of age. Under-13 signups are blocked entirely.</div></div>
+      <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><strong>Parental consent is mandatory for players aged 15–17.</strong> A parent or legal guardian must review and sign the HQ32 Minor Participant Consent & Waiver before the minor's registration is activated. The minor's registration is not complete until parental consent is received.</div></div>
+      <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><strong>Parent/guardian contact required.</strong> A reachable parent or guardian phone number must be provided at registration. This number must be available during all game days in case of emergency.</div></div>
+      <div class="rule-item"><div class="rule-num">5</div><div class="rule-text"><strong>Media consent for minors.</strong> Publishing video, photos, or highlights featuring a minor requires explicit written consent from a parent or guardian. This is collected as part of the parental consent form. Minors whose parents have not consented to media will not be featured in any published content.</div></div>
+      <div class="rule-item"><div class="rule-num">6</div><div class="rule-text"><strong>Code of conduct applies fully.</strong> Minor participants are held to the same HQ32 Code of Conduct as adult players. No trash talk, no attitude, no fighting. Parents and guardians are encouraged to review the code of conduct with their child before game day.</div></div>
+      <div class="rule-item"><div class="rule-num">7</div><div class="rule-text"><strong>The Keeper reserves the right</strong> to remove any minor participant from the league if their safety, wellbeing, or the safety of others is at risk — regardless of parental consent status.</div></div>
+    </div>
+
+    <!-- CONDUCT RULES -->
+    <div class="rules-block">
+      <h3>🤝 Conduct & Sportsmanship</h3>
+      <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><strong>No trash talk. Period.</strong> HooperQuest32 is a zero-tolerance environment for trash talk. If your opponent makes a tough shot — acknowledge it, compliment it, and move on. Good energy only. We are here to compete and grow, not to tear each other down.</div></div>
+      <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><strong>No attitude.</strong> Attitude, theatrics, and intimidation have no place here. Good sportsmanship is not optional — it is the standard. Celebrate your own plays with class, and respect your opponent's.</div></div>
+      <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><strong>No fighting.</strong> Any physical altercation results in <strong>immediate removal</strong> from the game and potential suspension from HooperQuest32.</div></div>
+      <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><strong>Honor the system.</strong> The foul system runs on the <strong>honor system</strong>. Call fouls honestly. Abusing foul calls disrespects the game and the community.</div></div>
+      <div class="rule-item"><div class="rule-num">5</div><div class="rule-text"><strong>Accept decisions.</strong> Once a challenge outcome is determined (shot made or missed), the call is <strong>final</strong>. No further disputes on that possession.</div></div>
+      <div class="rule-item"><div class="rule-num">6</div><div class="rule-text"><strong>Show up.</strong> If you sign up for a team, you commit to showing up. Notify your team as early as possible if you can't make it. No-shows without notice affect everyone.</div></div>
+      <div class="rule-item"><div class="rule-num">7</div><div class="rule-text"><strong>Represent HQ32.</strong> On and off the court, you carry the HooperQuest32 name. Play hard. Play right. Grow every possession.</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="section">
+  <p class="section-tag">How It Works</p>
+  <h2>Simple. Sign up. Hoop.</h2>
+  <p>No overcomplicated process. Just ball players, teams, and games.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">✍️</div>
+      <h3>Sign Up</h3>
+      <p>Fill in your name, email, position, and skill level. Free and fast.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">👥</div>
+      <h3>Teams Form</h3>
+      <p>Once we have enough players, we group everyone into balanced squads.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">📣</div>
+      <h3>Get Notified</h3>
+      <p>We'll email you your team, schedule, and everything you need to know.</p>
+    </div>
+    <div class="step">
+      <div class="step-icon">🏆</div>
+      <h3>Run It</h3>
+      <p>Show up, compete, and find out who really wants it.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section class="faq-section" id="faq">
+  <div class="faq-inner">
+    <div class="faq-header">
+      <span class="section-tag">Got Questions?</span>
+      <h2>FAQ</h2>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What formats are available? <span class="faq-icon">+</span></button>
+      <div class="faq-a">HooperQuest32 runs <strong>3v3 and 4v4</strong> formats. You pick your preferred format at signup. 4v4 is the default — if one or both teams are short on game day, the game drops to 3v3.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How long are the games? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Games are played in <strong>2 halves of 10 minutes each</strong> — same for both 3v3 and 4v4. There is a 3-minute halftime break and a <strong>32-second shot clock</strong> per possession.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How do foul calls work? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Each player gets <strong>3 free foul calls</strong> per game — no challenge, no questions. From the <strong>4th foul call onward</strong>, the defensive player may challenge it. A challenge means one player from the fouling team shoots a 3-pointer. <strong>Shot made</strong> → fouling team keeps the ball (min 20 sec shot clock). <strong>Shot missed</strong> → defending team gets the ball with a fresh 32-sec clock. It's a turnover.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What happens if the game is tied? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Tied games go to a <strong>shootout</strong>. Every player — active roster and sub — takes <strong>one shot each from beyond the arc</strong>. Most makes wins. If still tied: sudden death — one shooter per team alternating until one makes and the other misses.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is there a cost to join? <span class="faq-icon">+</span></button>
+      <div class="faq-a"><strong>No cost.</strong> HooperQuest32 is a free community league. We're here to build a hooper community — not make money. All you need to bring is your game and your respect.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is trash talk allowed? <span class="faq-icon">+</span></button>
+      <div class="faq-a"><strong>No.</strong> Zero tolerance. If your opponent hits a tough shot — acknowledge it and move on. HQ32 is built on respect, good sportsmanship, and love for the game. Trash talk, attitude, and ego have no place here.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Will games be recorded? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. Games will be filmed for <strong>season and game highlights</strong>, curated for every player. By signing up, you consent to being recorded and featured in HooperQuest32 content. If you have concerns, reach out before signing up.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Can players under 18 join? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes — the <strong>minimum age is 15</strong>. Players under 13 cannot join under any circumstances. Players aged 15–17 require a <strong>parent or legal guardian to sign a consent form</strong> before their registration is complete. The consent covers physical participation, injury risk, and media/video recording. Players under 18 will be prompted through this process automatically at signup.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is there a dress code? <span class="faq-icon">+</span></button>
+      <div class="faq-a"><strong>Yes — uniform is required to play.</strong> Every player must wear the same shirt color and design as their team, with the <strong>HQ32 logo</strong> on it. You can buy an official team jersey from our merch shop, or make your own shirt and apply an <strong>HQ32 iron-on patch</strong> (also available in the shop). Players without the correct uniform will not be permitted to play.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Can I make my own team shirt? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Absolutely. If you want to get your shirt made elsewhere, that's fine — just make sure the color matches your team's assigned color and that you have the official <strong>HQ32 iron-on patch</strong> applied to it. Patches are available in the HQ32 merch shop.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">When and where does Season 1 start? <span class="faq-icon">+</span></button>
+      <div class="faq-a">We are currently working through the <strong>Parks & Recreation permit process</strong> to secure an official court for Season 1. We want a guaranteed, reliable space for every player — not a first-come-first-served situation. Location and dates will be announced once the permit is confirmed. Sign up and you'll be the first to know.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section style="background:#0a0a0a;padding:4rem 1.5rem;text-align:center;border-top:1px solid #1a1a1a;" id="contact">
+  <p style="font-size:0.75rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--orange);margin-bottom:0.75rem;">Get In Touch</p>
+  <h2 style="font-size:clamp(1.6rem,4vw,2.4rem);font-weight:900;margin-bottom:0.75rem;">Questions? We Got You.</h2>
+  <p style="color:var(--gray);font-size:0.95rem;margin-bottom:2rem;max-width:460px;margin-left:auto;margin-right:auto;">Reach out before you sign up, after you sign up, or just to show love. We're building this community together.</p>
+  <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem;">
+    <a href="mailto:hello@hooperquest32.com" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,107,26,0.1);border:1px solid rgba(255,107,26,0.3);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📧 hello@hooperquest32.com</a>
+    <a href="#" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📸 @HooperQuest32</a>
+    <a href="#" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">🎵 @HooperQuest32</a>
+  </div>
+  <div style="background:rgba(255,107,26,0.06);border:1px solid rgba(255,107,26,0.15);border-radius:14px;padding:1.8rem;max-width:520px;margin:0 auto;">
+    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;">
+      <span style="font-size:1.1rem;">🏛️</span>
+      <span style="font-size:0.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--orange);">Official Community League</span>
+    </div>
+    <p style="font-size:0.88rem;color:#ccc;line-height:1.7;margin-bottom:1rem;">HooperQuest32 Season 1 is being organized as an <strong style="color:var(--white);">officially permitted recreational league</strong> in partnership with local Parks & Recreation. We're doing this the right way — so every player has a guaranteed court, a safe environment, and a league they can count on showing up for.</p>
+    <div style="border-top:1px solid rgba(255,107,26,0.15);padding-top:1rem;display:flex;flex-direction:column;gap:0.6rem;">
+      <p style="font-size:0.82rem;color:var(--gray);margin:0;">📍 <strong style="color:var(--white);">Location:</strong> TBD — permit in progress. Details dropping soon.</p>
+      <p style="font-size:0.82rem;color:var(--gray);margin:0;">📅 <strong style="color:var(--white);">Season 1 Kickoff:</strong> TBD — sign up to be first to know.</p>
+      <p style="font-size:0.82rem;color:var(--gray);margin:0;">🆓 <strong style="color:var(--white);">Cost:</strong> Free. Always. This is for the community.</p>
+    </div>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:2rem 1.5rem;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="font-size:1.1rem;font-weight:900;color:var(--white);margin-bottom:0.5rem;">Hooper<span style="color:var(--orange);">Quest</span>32</div>
+  <p style="font-size:0.75rem;color:var(--gray);letter-spacing:1px;margin-bottom:1rem;">ONE POSSESSION. <span style="color:var(--orange);">INFINITE GROWTH.</span> ENDLESS PURSUIT.</p>
+  <p style="font-size:0.75rem;color:#555;">© 2025 HooperQuest32. All rights reserved. &nbsp;·&nbsp; Built for the community. &nbsp;·&nbsp; <a onclick="openModal('liabilityModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Liability Waiver</a> &nbsp;·&nbsp; <a onclick="openModal('mediaModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Media Consent</a></p>
+</footer>
+
+<!-- DRAFT OVERLAY -->
+<div class="draft-overlay" id="draftOverlay">
+  <div class="draft-container">
+    <div class="draft-header">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">👑</div>
+      <h2>Captain <span>Draft Board</span></h2>
+      <p>Select players from the registration pool to build your team.</p>
+    </div>
+
+    <div class="draft-status-banner" id="draftStatusBanner">
+      ⏳ Draft Not Open Yet — The organizer will open the draft once enough players have registered. Check back soon.
+    </div>
+
+    <div class="draft-layout">
+      <!-- PLAYER POOL -->
+      <div class="draft-pool">
+        <h3>🏀 Registration Pool <span id="poolCount" style="color:var(--gray);font-weight:400;"></span></h3>
+        <div class="player-pool-grid" id="playerPoolGrid">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <!-- MY TEAM -->
+      <div class="draft-my-team">
+        <h3>👑 My Team <span id="rosterCount" style="color:rgba(255,215,0,0.5);font-weight:400;font-size:0.7rem;"></span></h3>
+        <div class="roster-list" id="rosterList">
+          <div class="roster-empty">No players drafted yet.<br>Select players from the pool.</div>
+        </div>
+        <div id="rosterFormatInfo" style="margin-top:1rem;font-size:0.78rem;color:var(--gray);text-align:center;"></div>
+      </div>
+    </div>
+
+    <button class="draft-close-btn" onclick="closeDraft()">← Back to Page</button>
+  </div>
+</div>
+
+<!-- PARENTAL CONSENT MODAL -->
+<div class="parent-modal" id="parentModal">
+  <div class="parent-modal-box">
+    <span class="pm-icon">👨‍👩‍👧</span>
+    <h2>Parent / Guardian Consent Required</h2>
+    <p class="pm-sub">This player is under 18. A parent or legal guardian must review and sign this consent before registration is complete.</p>
+
+    <div class="parent-field">
+      <label>Parent / Guardian Full Name</label>
+      <input type="text" id="parentName" placeholder="Full legal name"/>
+    </div>
+    <div class="parent-field">
+      <label>Parent / Guardian Email</label>
+      <input type="email" id="parentEmail" placeholder="Parent's email address"/>
+    </div>
+    <div class="parent-field">
+      <label>Parent / Guardian Phone</label>
+      <input type="tel" id="parentPhone" placeholder="Contact number — required for game day emergencies"/>
+    </div>
+    <div class="parent-field">
+      <label>Relationship to Player</label>
+      <input type="text" id="parentRelation" placeholder="e.g. Mother, Father, Legal Guardian"/>
+    </div>
+
+    <div class="parent-consent-text">
+      <strong>HooperQuest32 — Minor Participant Consent & Waiver</strong><br><br>
+
+      I, the undersigned parent or legal guardian, hereby give my consent for the minor named in this registration to participate in <strong>HooperQuest32</strong>, a free community recreational basketball league.<br><br>
+
+      <strong>Physical Activity & Injury Risk.</strong> I acknowledge that basketball involves inherent physical risks including but not limited to sprains, fractures, contusions, concussions, and other injuries. I confirm that the minor is physically capable of participating and is not subject to any medical condition that would prevent safe participation.<br><br>
+
+      <strong>Assumption of Risk.</strong> On behalf of myself and the minor, I voluntarily assume all risks associated with participation, including risks arising from the actions of other participants and the condition of the playing surface.<br><br>
+
+      <strong>Release of Liability.</strong> I hereby release, waive, and discharge HooperQuest32, its organizers, volunteers, and affiliates from any and all claims arising out of or relating to any injury — including death — that may be sustained by the minor during participation.<br><br>
+
+      <strong>Media & Video Consent.</strong> I consent to the minor being photographed and/or recorded on video during games and events. I understand their image and footage may be used in season highlights, game recaps, and social media content under the HooperQuest32 brand. I confirm HooperQuest32 will not sell the minor's likeness to third parties.<br><br>
+
+      <strong>Code of Conduct.</strong> I confirm the minor has read and agrees to the HQ32 Code of Conduct, including the zero-tolerance policy for trash talk, fighting, and disrespectful behavior.<br><br>
+
+      <strong>Emergency Contact.</strong> I confirm that the phone number provided is reachable during all game days. In the event of an emergency involving the minor, HooperQuest32 organizers are authorized to contact emergency services and will attempt to notify me immediately.<br><br>
+
+      <strong>Minimum Age.</strong> I confirm that the minor is at least 15 years of age. Players under 15 are not eligible to participate in HooperQuest32.<br><br>
+
+      By checking the box below, I confirm that I am the parent or legal guardian of the registered player, that I have read this consent in full, and that I agree to its terms on behalf of the minor.
+    </div>
+
+    <div class="parent-check-row">
+      <input type="checkbox" id="parentConsentCheck"/>
+      <label for="parentConsentCheck">I am the parent or legal guardian of this player. I have read the full consent and waiver above and agree to its terms. I understand this serves as my electronic signature.</label>
+    </div>
+
+    <button class="btn-parent-submit" onclick="submitParentConsent()">✅ I Consent — Complete Registration</button>
+    <button class="btn-parent-cancel" onclick="cancelParentConsent()">Cancel Registration</button>
+  </div>
+</div>
+
+<!-- CONDUCT MODAL -->
+<div class="modal-overlay" id="conductModal">
+  <div class="modal-box">
+    <h3>⚖️ HQ32 Code of Conduct</h3>
+    <div class="modal-date">HooperQuest32 — Season 1</div>
+    <p><strong>No trash talk.</strong> HooperQuest32 is a zero-tolerance environment for trash talk of any kind. If your opponent makes a great play, acknowledge it and move on. We play hard and we play right.</p>
+    <p><strong>No attitude.</strong> Theatrics, intimidation, and ego have no place here. Celebrate with class. Respect your opponent at all times.</p>
+    <p><strong>No fighting.</strong> Any physical altercation results in immediate removal from the game and potential suspension from all HooperQuest32 activities.</p>
+    <p><strong>Honor the foul system.</strong> Call fouls honestly. The system runs on trust. Abusing foul calls disrespects every player on the court.</p>
+    <p><strong>Show up.</strong> If you commit to a team, you commit to showing up. Notify your team as early as possible if you cannot make it.</p>
+    <p><strong>Accept decisions.</strong> Once a challenge outcome is determined, it is final. No further disputes on that possession.</p>
+    <p><strong>Represent HQ32.</strong> On and off the court, you carry the HooperQuest32 name. Play hard. Play right. Grow every possession.</p>
+    <p style="font-size:0.78rem;color:#666;">Violations of the code of conduct may result in removal from games or suspension from the league at the organizer's discretion.</p>
+    <button class="modal-close" onclick="closeModal('conductModal')">Got It — Close</button>
+  </div>
+</div>
+
+<!-- MEDIA CONSENT MODAL -->
+<div class="modal-overlay" id="mediaModal">
+  <div class="modal-box">
+    <h3>🎥 Media & Video Consent</h3>
+    <div class="modal-date">HooperQuest32 — Season 1</div>
+    <p>By participating in HooperQuest32, you consent to being <strong>photographed and/or recorded on video</strong> during games, warm-ups, and any related HooperQuest32 events.</p>
+    <p>You understand and agree that your image, likeness, and recorded footage may be used by HooperQuest32 for the following purposes:</p>
+    <p>• <strong>Season highlight reels</strong> — curated clips from games throughout the season<br>
+    • <strong>Game highlights</strong> — individual and team highlight content<br>
+    • <strong>Social media posts</strong> — Instagram, TikTok, YouTube, and other platforms under the HooperQuest32 brand<br>
+    • <strong>Promotional content</strong> — content used to promote future HooperQuest32 seasons and events</p>
+    <p>This consent is provided voluntarily and without compensation. HooperQuest32 will not sell your likeness to third parties. If you have any concerns about specific content, please contact us directly at hello@hooperquest32.com.</p>
+    <p style="font-size:0.78rem;color:#666;">This consent applies for the duration of Season 1 and any highlight content produced from it.</p>
+    <button class="modal-close" onclick="closeModal('mediaModal')">I Understand — Close</button>
+  </div>
+</div>
+
+<!-- LIABILITY WAIVER MODAL -->
+<div class="modal-overlay" id="liabilityModal">
+  <div class="modal-box">
+    <h3>📋 Liability Waiver & Release</h3>
+    <div class="modal-date">HooperQuest32 — Season 1</div>
+    <p><strong>Please read carefully before signing up.</strong></p>
+    <p>I, the undersigned participant, acknowledge that <strong>basketball and all related physical activities involve inherent risks</strong> including but not limited to: sprains, fractures, contusions, concussions, and other injuries that may occur despite precautions.</p>
+    <p><strong>Voluntary Participation.</strong> I confirm that my participation in HooperQuest32 is entirely voluntary. I am physically capable of participating and am not aware of any medical condition that would prevent me from doing so safely.</p>
+    <p><strong>Assumption of Risk.</strong> I voluntarily assume all risks associated with participation, including risks arising from the actions of other participants, the condition of the playing surface, and any other hazards present.</p>
+    <p><strong>Release of Liability.</strong> In consideration of being allowed to participate, I hereby release, waive, and discharge HooperQuest32, its organizers, volunteers, and affiliates from any and all claims, demands, or causes of action arising out of or relating to any loss, damage, or injury — including death — that may be sustained by me during participation, whether caused by negligence or otherwise.</p>
+    <p><strong>No-Cost League.</strong> I acknowledge that HooperQuest32 is a free, community-organized recreational league and that no entry fee has been collected from me.</p>
+    <p><strong>Medical Treatment.</strong> I authorize HooperQuest32 organizers to seek emergency medical treatment on my behalf if I am incapacitated and unable to do so myself. I accept full financial responsibility for any medical treatment required.</p>
+    <p style="font-size:0.78rem;color:#666;">⚠️ This waiver is intended for a community recreational league. It is strongly recommended that participants carry their own personal health/sports insurance. By checking the box on the signup form, you are agreeing to the terms of this waiver electronically.</p>
+    <button class="modal-close" onclick="closeModal('liabilityModal')">I Have Read & Accept — Close</button>
+  </div>
+</div>
+
+<!-- BIO OVERLAY -->
+<div class="bio-page" id="bioPage">
+  <div class="bio-card">
+
+    <!-- Step 1: Fill bio -->
+    <div id="bioForm">
+      <div class="bio-card-header">
+        <div class="player-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
+          <div class="avatar-placeholder" id="avatarPlaceholder">🏀</div>
+          <img id="avatarPreview" class="player-avatar" style="display:none" alt="avatar"/>
+        </div>
+        <div class="avatar-upload-hint">Tap to upload a photo (optional)</div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none"/>
+        <h2>Build Your Player Card</h2>
+        <p>All fields are optional — share as much or as little as you want.</p>
+      </div>
+
+      <div class="bio-field">
+        <label>Nickname / Player Tag <span class="optional">optional</span></label>
+        <input type="text" id="bioNickname" placeholder='e.g. "Ice", "Buckets", "The Wall"'/>
+      </div>
+      <div class="bio-field">
+        <label>Height <span class="optional">optional</span></label>
+        <select id="bioHeight">
+          <option value="">Select height</option>
+          <option>Under 5'6"</option>
+          <option>5'6" – 5'9"</option>
+          <option>5'10" – 6'0"</option>
+          <option>6'1" – 6'3"</option>
+          <option>6'4" – 6'6"</option>
+          <option>6'7" and up</option>
+        </select>
+      </div>
+      <div class="bio-field">
+        <label>Favorite NBA Team <span class="optional">optional</span></label>
+        <input type="text" id="bioTeam" placeholder="e.g. Lakers, Celtics, Heat…"/>
+      </div>
+      <div class="bio-field">
+        <label>Favorite Player <span class="optional">optional</span></label>
+        <input type="text" id="bioPlayer" placeholder="e.g. LeBron, Curry, KD…"/>
+      </div>
+      <div class="bio-field">
+        <label>Playstyle / Bio <span class="optional">optional</span></label>
+        <textarea id="bioPlaystyle" placeholder="Describe your game… scorer, facilitator, lockdown D, versatile, etc."></textarea>
+      </div>
+
+      <div class="bio-actions">
+        <button class="btn-skip" onclick="skipBio()">Skip</button>
+        <button class="btn-save-bio" onclick="saveBio()">Save My Card 🏀</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Card reveal -->
+    <div class="player-card-reveal" id="cardReveal">
+      <p style="font-size:0.8rem;color:var(--gray);letter-spacing:2px;text-transform:uppercase;margin-bottom:1.2rem">Your Player Card</p>
+      <div class="player-card">
+        <div id="cardAvatarWrap">
+          <div class="card-avatar" id="cardAvatarEmoji">🏀</div>
+        </div>
+        <div class="card-name" id="cardName"></div>
+        <div class="card-tag" id="cardTag"></div>
+        <div class="card-stats">
+          <span><strong id="cardFormat"></strong>Format</span>
+          <span><strong id="cardHeight"></strong>Height</span>
+          <span><strong id="cardFavTeam"></strong>Fav Team</span>
+        </div>
+        <div class="card-playstyle" id="cardPlaystyle"></div>
+      </div>
+      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1.2rem">You're locked in. We'll be in touch. 🔒</p>
+      <button class="btn-done" onclick="closeBio()">Let's Go 🏀</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ─── FIREBASE INIT ─────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCobcuomSCvtfnlmA0gERFD0rsmNaSY-k",
+    authDomain: "hooper-quest32-g6u3nh.firebaseapp.com",
+    projectId: "hooper-quest32-g6u3nh",
+    storageBucket: "hooper-quest32-g6u3nh.firebasestorage.app",
+    messagingSenderId: "314783672229",
+    appId: "1:314783672229:web:d9fae34e86dbc88b28aa4c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // ─── AGE GATE & PARENTAL CONSENT ───────────────────────────
+  let playerAge = null;
+  let parentConsentGiven = false;
+
+  function checkAge() {
+    const dob = document.getElementById('playerDOB').value;
+    if (!dob) return;
+    const today = new Date();
+    const birth = new Date(dob);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    playerAge = age;
+
+    const warning = document.getElementById('ageWarning');
+    const notice  = document.getElementById('minorNotice');
+    const submitBtn = document.querySelector('.btn-signup');
+
+    if (age < 13) {
+      warning.innerHTML = '⛔ Players under 13 are not eligible to join HooperQuest32. No exceptions.';
+      warning.classList.add('show');
+      notice.classList.remove('show');
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.4';
+    } else if (age < 15) {
+      warning.innerHTML = '⛔ You must be at least <strong>15 years old</strong> to join HooperQuest32.';
+      warning.classList.add('show');
+      notice.classList.remove('show');
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.4';
+    } else if (age < 18) {
+      warning.classList.remove('show');
+      notice.classList.add('show');
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    } else {
+      warning.classList.remove('show');
+      notice.classList.remove('show');
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    }
+  }
+
+  function openParentModal() {
+    document.getElementById('parentModal').classList.add('active');
+  }
+
+  function submitParentConsent() {
+    const name     = document.getElementById('parentName').value.trim();
+    const email    = document.getElementById('parentEmail').value.trim();
+    const phone    = document.getElementById('parentPhone').value.trim();
+    const relation = document.getElementById('parentRelation').value.trim();
+    const checked  = document.getElementById('parentConsentCheck').checked;
+
+    if (!name || !email || !phone) {
+      alert('Please fill in parent/guardian name, email, and phone number.');
+      return;
+    }
+    if (!checked) {
+      alert('Parent or guardian must check the consent box to complete registration.');
+      return;
+    }
+    parentConsentGiven = true;
+    document.getElementById('parentModal').classList.remove('active');
+    // Complete the signup flow
+    finalizeSignup();
+  }
+
+  function cancelParentConsent() {
+    document.getElementById('parentModal').classList.remove('active');
+    // Reset form
+    document.getElementById('signupForm').style.display = 'block';
+    document.getElementById('successMsg').style.display = 'none';
+  }
+
+  async function finalizeSignup() {
+    const submitBtn = document.querySelector('.btn-signup');
+    const origText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Registering...';
+
+    const fn = document.getElementById('firstName').value.trim();
+    const ln = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const dob = document.getElementById('playerDOB').value;
+
+    try {
+      const statsRef = db.collection('meta').doc('stats');
+      const guildRef = db.collection('meta').doc('guildCounts');
+      let playerNum = 0;
+
+      await db.runTransaction(async (tx) => {
+        const statsDoc = await tx.get(statsRef);
+        playerNum = (statsDoc.exists ? (statsDoc.data().totalRegistrations || 0) : 0) + 1;
+        if (statsDoc.exists) {
+          tx.update(statsRef, { totalRegistrations: playerNum });
+        } else {
+          tx.set(statsRef, { totalRegistrations: playerNum });
+        }
+        if (selectedGuild) {
+          const guildDoc = await tx.get(guildRef);
+          if (guildDoc.exists) {
+            tx.update(guildRef, { [selectedGuild]: firebase.firestore.FieldValue.increment(1) });
+          } else {
+            tx.set(guildRef, { [selectedGuild]: 1 });
+          }
+        }
+      });
+
+      const pid = 'HQ32-' + String(playerNum).padStart(4, '0');
+
+      const regData = {
+        firstName: fn,
+        lastName: ln || '',
+        email: email,
+        dob: dob,
+        format: selectedFormat || '',
+        guild: selectedGuild || '',
+        playerId: pid,
+        registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (playerAge < 18 && parentConsentGiven) {
+        regData.parentName = document.getElementById('parentName').value.trim();
+        regData.parentEmail = document.getElementById('parentEmail').value.trim();
+        regData.parentPhone = document.getElementById('parentPhone').value.trim();
+        regData.parentRelation = document.getElementById('parentRelation').value.trim();
+      }
+
+      await db.collection('registrations').add(regData);
+
+      sessionStorage.setItem('hq32_name', ln ? `${fn} ${ln}` : fn);
+      sessionStorage.setItem('hq32_guild', selectedGuild);
+      sessionStorage.setItem('hq32_format', selectedFormat);
+      sessionStorage.setItem('hq32_pid', pid);
+
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+
+      setTimeout(() => { document.getElementById('bioPage').classList.add('active'); }, 800);
+
+    } catch (err) {
+      console.error('Registration error:', err);
+      submitBtn.disabled = false;
+      submitBtn.textContent = origText;
+      alert('Something went wrong registering you. Please try again.');
+    }
+  }
+
+  // ─── FOUNDER APPLICATION ───────────────────────────────────
+  async function submitFounderApp() {
+    const name  = document.getElementById('founderName').value.trim();
+    const email = document.getElementById('founderEmail').value.trim();
+    const guild = document.getElementById('founderGuildName').value.trim();
+    if (!name || !email) {
+      alert('Please enter your name and email so The Keeper can reach you.');
+      return;
+    }
+    try {
+      await db.collection('founderApps').add({
+        name, email,
+        proposedGuild: guild || '',
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      document.getElementById('founderForm').style.display = 'none';
+      document.getElementById('founderSuccess').style.display = 'block';
+    } catch (err) {
+      console.error('Founder app error:', err);
+      alert('Something went wrong. Please try again.');
+    }
+  }
+
+  // ─── GUILD SYSTEM ──────────────────────────────────────────
+  let selectedGuild = '';
+
+  const GUILDS = {
+    sharpened: { name: 'The Sharpened', color: '#DC3232', emblem: '⚔️' },
+    seekers:   { name: 'The Seekers',   color: '#FF6B1A', emblem: '🧭' },
+    architects:{ name: 'The Architects',color: '#3282DC', emblem: '⚙️' },
+    unknown:   { name: 'The Unknown',   color: '#9632DC', emblem: '👁️' },
+  };
+
+  // ─── REAL-TIME FIRESTORE LISTENERS ─────────────────────────
+  // Player count
+  db.collection('meta').doc('stats').onSnapshot(doc => {
+    const total = doc.exists ? (doc.data().totalRegistrations || 0) : 0;
+    document.getElementById('playerCount').textContent = total;
+    const perTeam = selectedFormat === '4v4' ? 4 : 3;
+    document.getElementById('teamCount').textContent = Math.floor(total / perTeam);
+  });
+
+  // Guild counts
+  db.collection('meta').doc('guildCounts').onSnapshot(doc => {
+    if (!doc.exists) return;
+    const data = doc.data();
+    Object.keys(GUILDS).forEach(g => {
+      const prefix = g[0];
+      const el = document.getElementById(`${prefix}-count`);
+      if (el) el.textContent = data[g] || 0;
+      const sq = document.getElementById(`${prefix}-squads`);
+      if (sq) sq.textContent = Math.floor((data[g] || 0) / 5);
+    });
+  });
+
+  function selectGuild(guild) {
+    selectedGuild = guild;
+    Object.keys(GUILDS).forEach(g => {
+      document.getElementById(`guild-${g}`).classList.toggle('selected', g === guild);
+    });
+  }
+
+  function joinGuildScroll(guild) {
+    document.getElementById('signup').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ─── CAPTAIN & DRAFT ───────────────────────────────────────
+
+  // Simulated player pool — in a real app this comes from a database
+  const MOCK_PLAYERS = [
+    { id:1, name:'Marcus T.', format:'3v3', avatar:'🏀' },
+    { id:2, name:'Darius W.', format:'4v4', avatar:'🏀' },
+    { id:3, name:'Kevin J.', format:'3v3', avatar:'🏀' },
+    { id:4, name:'Jordan L.', format:'4v4', avatar:'🏀' },
+    { id:5, name:'Amir P.', format:'4v4', avatar:'🏀' },
+    { id:6, name:'Trey B.', format:'3v3', avatar:'🏀' },
+    { id:7, name:'Isaiah C.', format:'3v3', avatar:'🏀' },
+    { id:8, name:'Devon M.', format:'4v4', avatar:'🏀' },
+    { id:9, name:'Jalen F.', format:'3v3', avatar:'🏀' },
+    { id:10, name:'Cam R.', format:'4v4', avatar:'🏀' },
+  ];
+
+  // Set to true to open the draft (organizer control)
+  const DRAFT_IS_OPEN = false;
+
+  let myRoster = [];
+
+  function openDraft() {
+    document.getElementById('draftOverlay').classList.add('active');
+    renderDraftBoard();
+  }
+
+  function closeDraft() {
+    document.getElementById('draftOverlay').classList.remove('active');
+  }
+
+  function renderDraftBoard() {
+    const grid = document.getElementById('playerPoolGrid');
+    const banner = document.getElementById('draftStatusBanner');
+    const teamSize = selectedFormat === '3v3' ? 3 : selectedFormat === '4v4' ? 4 : 5;
+    const rosterId = myRoster.map(p => p.id);
+
+    // Status banner
+    if (DRAFT_IS_OPEN) {
+      banner.className = 'draft-status-banner open';
+      banner.textContent = '✅ Draft is Open — Select your players below!';
+    }
+
+    // Pool
+    const filtered = MOCK_PLAYERS.filter(p => !p.isCaptain);
+    document.getElementById('poolCount').textContent = `(${filtered.length} players)`;
+
+    grid.innerHTML = filtered.map(p => `
+      <div class="pool-player-card ${rosterId.includes(p.id) ? 'drafted' : ''}" id="pool-${p.id}">
+        <div class="pool-avatar">${p.avatar}</div>
+        <div class="pool-info">
+          <div class="pool-name">${p.name}</div>
+          <div class="pool-format">${p.format}</div>
+        </div>
+        <button class="btn-draft-pick"
+          onclick="draftPlayer(${p.id})"
+          ${!DRAFT_IS_OPEN || rosterId.includes(p.id) || myRoster.length >= teamSize ? 'disabled' : ''}>
+          ${rosterId.includes(p.id) ? 'Drafted' : 'Pick'}
+        </button>
+      </div>
+    `).join('');
+
+    // Roster
+    renderRoster(teamSize);
+  }
+
+  function renderRoster(teamSize) {
+    const list = document.getElementById('rosterList');
+    const info = document.getElementById('rosterFormatInfo');
+    document.getElementById('rosterCount').textContent = `(${myRoster.length}/${teamSize})`;
+
+    if (myRoster.length === 0) {
+      list.innerHTML = '<div class="roster-empty">No players drafted yet.<br>Select players from the pool.</div>';
+    } else {
+      list.innerHTML = myRoster.map((p, i) => `
+        <div class="roster-item">
+          <div class="roster-num">${i+1}</div>
+          <span>${p.name}</span>
+          <span style="margin-left:auto;font-size:0.72rem;color:var(--gray);">${p.format}</span>
+        </div>
+      `).join('');
+    }
+
+    if (myRoster.length >= teamSize) {
+      info.innerHTML = `<span style="color:#00C864;font-weight:700;">✅ Team full! ${teamSize}/${teamSize} players drafted.</span>`;
+    } else {
+      info.textContent = `${selectedFormat || '—'} format · ${teamSize - myRoster.length} spot${teamSize - myRoster.length !== 1 ? 's' : ''} remaining`;
+    }
+  }
+
+  function draftPlayer(id) {
+    if (!DRAFT_IS_OPEN) return;
+    const player = MOCK_PLAYERS.find(p => p.id === id);
+    if (!player || myRoster.find(p => p.id === id)) return;
+    const teamSize = selectedFormat === '3v3' ? 3 : selectedFormat === '4v4' ? 4 : 5;
+    if (myRoster.length >= teamSize) return;
+    myRoster.push(player);
+    renderDraftBoard();
+  }
+
+  // ─── MERCH NOTIFY ───────────────────────────────────────────
+  // Merch notify
+  function notifyMe() {
+    const email = document.getElementById('notifyEmail').value;
+    if (!email || !email.includes('@')) return;
+    document.getElementById('notifyEmail').disabled = true;
+    document.querySelector('.notify-row button').disabled = true;
+    document.getElementById('notifyConfirm').style.display = 'block';
+  }
+
+  // Modal helpers
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+  });
+
+  // FAQ accordion
+  function toggleFaq(btn) {
+    const answer = btn.nextElementSibling;
+    btn.classList.toggle('open');
+    answer.classList.toggle('open');
+  }
+
+  let selectedFormat = '';
+
+  function selectFormat(fmt) {
+    selectedFormat = fmt;
+    document.getElementById('btn3v3').classList.toggle('selected', fmt === '3v3');
+    document.getElementById('btn4v4').classList.toggle('selected', fmt === '4v4');
+  }
+
+  // Avatar upload preview
+  document.getElementById('avatarInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('avatarPlaceholder').style.display = 'none';
+      const preview = document.getElementById('avatarPreview');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Counter is driven by Firestore real-time listener above
+
+  document.getElementById('signupForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // Block if age not checked or under minimum
+    if (playerAge === null || playerAge < 15) {
+      document.getElementById('ageWarning').classList.add('show');
+      document.getElementById('playerDOB').focus();
+      return;
+    }
+    // Minor — needs parent consent first
+    if (playerAge < 18 && !parentConsentGiven) {
+      openParentModal();
+      return;
+    }
+    // Adult or consented minor — finalize
+    finalizeSignup();
+  });
+
+  function saveBio() {
+    const firstName = document.getElementById('firstName').value;
+    const lastName = document.getElementById('lastName').value;
+    const nickname = document.getElementById('bioNickname').value;
+    const height = document.getElementById('bioHeight').value;
+    const favTeam = document.getElementById('bioTeam').value;
+    const favPlayer = document.getElementById('bioPlayer').value;
+    const playstyle = document.getElementById('bioPlaystyle').value;
+    const avatarSrc = document.getElementById('avatarPreview').src;
+    const hasAvatar = document.getElementById('avatarPreview').style.display !== 'none';
+
+    // Populate card
+    const pid = sessionStorage.getItem('hq32_pid') || 'HQ32-????';
+    document.getElementById('cardName').textContent = `${firstName} ${lastName}`.trim();
+    // Show Player ID on card
+    const pidEl = document.getElementById('cardPID') || (() => {
+      const el = document.createElement('div');
+      el.id = 'cardPID';
+      el.style.cssText = 'font-size:0.65rem;color:rgba(160,160,176,0.5);letter-spacing:2px;margin-bottom:0.5rem;font-weight:700;';
+      document.querySelector('.card-name').before(el);
+      return el;
+    })();
+    pidEl.textContent = pid;
+    document.getElementById('cardTag').textContent = nickname ? `"${nickname}"` : (favPlayer ? `Inspired by ${favPlayer}` : 'HQ32 Player');
+    document.getElementById('cardFormat').textContent = selectedFormat || '—';
+    document.getElementById('cardHeight').textContent = height || '—';
+    document.getElementById('cardFavTeam').textContent = favTeam || '—';
+    document.getElementById('cardPlaystyle').textContent = playstyle || '';
+    // Guild on card
+    if (selectedGuild && GUILDS[selectedGuild]) {
+      const g = GUILDS[selectedGuild];
+      const existing = document.getElementById('cardGuildBadge');
+      if (!existing) {
+        const badge = document.createElement('div');
+        badge.id = 'cardGuildBadge';
+        badge.style.cssText = `margin-top:0.6rem;font-size:0.75rem;font-weight:800;color:${g.color};letter-spacing:1px;`;
+        badge.textContent = `${g.emblem} ${g.name}`;
+        document.querySelector('.card-tag').after(badge);
+      }
+    }
+
+    if (hasAvatar) {
+      document.getElementById('cardAvatarWrap').innerHTML = `<img src="${avatarSrc}" class="card-avatar" style="display:block" alt="avatar"/>`;
+    }
+
+    document.getElementById('bioForm').style.display = 'none';
+    document.getElementById('cardReveal').style.display = 'block';
+  }
+
+  function skipBio() {
+    document.getElementById('bioPage').classList.remove('active');
+  }
+
+  function closeBio() {
+    document.getElementById('bioPage').classList.remove('active');
+  }
+
+  // ─── MINI GAME — INSTINCT SORTING ────────────────────────────────────────
+  const MG_ROUNDS = [
+    { category:'COLOR', type:'color', choices:[
+        {color:'#8B0000',guild:'sharpened'},{color:'#8B4513',guild:'sharpened'},
+        {color:'#FF6B1A',guild:'seekers'  },{color:'#FFB347',guild:'seekers'  },
+        {color:'#7B2FBE',guild:'unknown'  },{color:'#C8A2C8',guild:'unknown'  },
+        {color:'#1B3A8C',guild:'architects'},{color:'#008080',guild:'architects'}
+    ]},
+    { category:'ANIMAL', type:'choice', cols:'four', choices:[
+        {emoji:'🐆',name:'Leopard',    guild:'sharpened'},
+        {emoji:'🐺',name:'Wolf',        guild:'seekers'  },
+        {emoji:'🦅',name:'Eagle',       guild:'unknown'  },
+        {emoji:'🦁',name:'Lion',        guild:'architects'}
+    ]},
+    { category:'WEAPON', type:'choice', cols:'four', choices:[
+        {emoji:'⚔️', name:'Sword',      guild:'sharpened'},
+        {emoji:'🪃', name:'Boomerang',  guild:'seekers'  },
+        {emoji:'💣', name:'Cannon',     guild:'unknown'  },
+        {emoji:'🏹', name:'Bow & Arrow',guild:'architects'}
+    ]},
+    { category:'ELEMENT', type:'choice', cols:'five', choices:[
+        {emoji:'🔩',name:'Metal',    guild:'sharpened'},
+        {emoji:'🔥',name:'Fire',     guild:'seekers'  },
+        {emoji:'💧',name:'Water',    guild:'unknown'  },
+        {emoji:'🌍',name:'Earth',    guild:'architects'},
+        {emoji:'⚡',name:'Lightning',guild:null,wildcard:true}
+    ]},
+    { category:'THE WHEEL', type:'wheel' }
+  ];
+  var mgCurrentRound=0, mgScores={sharpened:0,seekers:0,architects:0,unknown:0};
+  var mgTimerInterval=null, mgTimeLeft=5, mgPicked=false;
+
+  function launchMiniGame(){
+    if(playerAge===null||playerAge<15){
+      document.getElementById('ageWarning').classList.add('show');
+      document.getElementById('playerDOB').focus(); return;
+    }
+    mgCurrentRound=0; mgScores={sharpened:0,seekers:0,architects:0,unknown:0};
+    document.getElementById('minigameOverlay').classList.add('active');
+    renderMgRound();
+  }
+
+  function renderMgRound(){
+    var round=MG_ROUNDS[mgCurrentRound];
+    document.getElementById('mgRoundNum').textContent=mgCurrentRound+1;
+    document.getElementById('mgProgressFill').style.width=(((mgCurrentRound+1)/5)*100)+'%';
+    document.getElementById('mgCategory').textContent=round.category;
+    mgPicked=false;
+    var content=document.getElementById('mgContent');
+    if(round.type==='color'){
+      content.innerHTML='<div class="mg-color-grid">'+round.choices.map(function(c,i){
+        return '<div class="mg-color-swatch" style="background:'+c.color+'" onclick="mgPickColor('+i+',''+c.guild+'')"></div>';
+      }).join('')+'</div>';
+      startMgTimer(5);
+    } else if(round.type==='choice'){
+      content.innerHTML='<div class="mg-choice-grid '+round.cols+'">'+round.choices.map(function(c,i){
+        return '<button class="mg-choice-btn'+(c.wildcard?' wildcard':'')+'" onclick="mgPickChoice('+i+',''+(c.guild||'')+'')"><span class="mg-choice-emoji">'+c.emoji+'</span><span class="mg-choice-name">'+c.name+'</span></button>';
+      }).join('')+'</div>';
+      startMgTimer(5);
+    } else if(round.type==='wheel'){
+      content.innerHTML='<div class="mg-wheel-wrap"><canvas class="mg-wheel-canvas" id="mgWheelCanvas" width="260" height="260"></canvas><div class="mg-wheel-result" id="mgWheelResult"></div><button class="mg-lever-btn" id="mgLeverBtn" onclick="spinWheel()">🎰 Pull the Lever</button></div>';
+      drawWheel(0); stopMgTimer();
+      document.getElementById('mgTimer').textContent='—';
+    }
+  }
+
+  function startMgTimer(s){
+    stopMgTimer(); mgTimeLeft=s;
+    var el=document.getElementById('mgTimer'); el.textContent=s; el.classList.remove('urgent');
+    mgTimerInterval=setInterval(function(){
+      mgTimeLeft--; el.textContent=mgTimeLeft;
+      if(mgTimeLeft<=2) el.classList.add('urgent');
+      if(mgTimeLeft<=0){stopMgTimer(); if(!mgPicked) mgNextRound();}
+    },1000);
+  }
+  function stopMgTimer(){if(mgTimerInterval){clearInterval(mgTimerInterval);mgTimerInterval=null;}}
+  function mgPickColor(i,guild){if(mgPicked)return;mgPicked=true;stopMgTimer();document.querySelectorAll('.mg-color-swatch')[i].classList.add('picked');if(guild)mgScores[guild]++;setTimeout(mgNextRound,500);}
+  function mgPickChoice(i,guild){if(mgPicked)return;mgPicked=true;stopMgTimer();document.querySelectorAll('.mg-choice-btn')[i].classList.add('picked');if(guild)mgScores[guild]++;setTimeout(mgNextRound,500);}
+  function mgNextRound(){mgCurrentRound++;if(mgCurrentRound>=MG_ROUNDS.length)mgFinish();else renderMgRound();}
+
+  function drawWheel(rotation){
+    var canvas=document.getElementById('mgWheelCanvas'); if(!canvas)return;
+    var ctx=canvas.getContext('2d'),cx=130,cy=130,r=120;
+    var zones=[{label:'1-10',color:'#DC3232'},{label:'11-20',color:'#FF6B1A'},{label:'21-30',color:'#9632DC'},{label:'31-40',color:'#3282DC'}];
+    ctx.clearRect(0,0,260,260);
+    zones.forEach(function(z,i){
+      var s=rotation+(i/4)*Math.PI*2-Math.PI/2, e=rotation+((i+1)/4)*Math.PI*2-Math.PI/2;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();
+      ctx.fillStyle=z.color;ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.stroke();
+      var mid=(s+e)/2;
+      ctx.save();ctx.translate(cx+Math.cos(mid)*r*0.62,cy+Math.sin(mid)*r*0.62);
+      ctx.rotate(mid+Math.PI/2);ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+      ctx.fillText(z.label,0,0);ctx.restore();
+    });
+    ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();
+    ctx.beginPath();ctx.moveTo(cx,cy-r-8);ctx.lineTo(cx-8,cy-r+8);ctx.lineTo(cx+8,cy-r+8);ctx.closePath();ctx.fillStyle='#FF6B1A';ctx.fill();
+  }
+
+  function spinWheel(){
+    var btn=document.getElementById('mgLeverBtn'); btn.disabled=true; btn.textContent='🎡 Spinning…';
+    var totalRot=(Math.PI*2*5)+(Math.random()*Math.PI*2), dur=3000, t0=performance.now();
+    var zoneGuilds=['sharpened','seekers','unknown','architects'];
+    var zoneRanges={sharpened:[1,10],seekers:[11,20],unknown:[21,30],architects:[31,40]};
+    function animate(now){
+      var t=Math.min((now-t0)/dur,1), ease=1-Math.pow(1-t,3);
+      drawWheel(totalRot*ease);
+      if(t<1){requestAnimationFrame(animate);return;}
+      var adj=((totalRot%(Math.PI*2)+Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      var gi=Math.floor(adj/(Math.PI/2))%4, g=zoneGuilds[gi];
+      mgScores[g]+=0.5;
+      var rng=zoneRanges[g], num=Math.floor(Math.random()*(rng[1]-rng[0]+1))+rng[0];
+      var res=document.getElementById('mgWheelResult'); res.style.display='block'; res.textContent='🎯 Number '+num;
+      setTimeout(mgFinish,1200);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function mgFinish(){
+    stopMgTimer(); document.getElementById('minigameOverlay').classList.remove('active');
+    var winner=null,top=-1;
+    Object.entries(mgScores).forEach(function(e){if(e[1]>top){top=e[1];winner=e[0];}else if(e[1]===top&&Math.random()>0.5){winner=e[0];}});
+    selectedGuild=winner;
+    try{sessionStorage.setItem('hq32_sorted_guild',winner);}catch(ex){}
+    var hid=document.getElementById('hiddenGuildResult'); if(hid) hid.value=winner;
+    document.getElementById('sortingLockedNotice').style.display='none';
+    document.getElementById('sortingComplete').style.display='block';
+    document.getElementById('sortingDoneOverlay').classList.add('active');
+  }
+
+  function closeSortingDone(){document.getElementById('sortingDoneOverlay').classList.remove('active');}
+
+</script>
+<!-- MINI GAME OVERLAY -->
+<div class="minigame-overlay" id="minigameOverlay">
+  <div class="mg-container">
+    <div class="mg-header">
+      <div class="mg-progress">
+        <span class="mg-round-label">Round <span id="mgRoundNum">1</span> of 5</span>
+        <div class="mg-progress-bar"><div class="mg-progress-fill" id="mgProgressFill" style="width:20%"></div></div>
+      </div>
+      <div class="mg-timer" id="mgTimer">5</div>
+    </div>
+    <div class="mg-content" id="mgContent"></div>
+    <div class="mg-category" id="mgCategory">COLOR</div>
+  </div>
+</div>
+<!-- SORTING DONE OVERLAY -->
+<div class="sorting-done-overlay" id="sortingDoneOverlay">
+  <div>
+    <div class="sd-big-icon">🔮</div>
+    <div class="sd-title">The Court Has Decided.</div>
+    <p class="sd-sub">Your guild assignment is locked. The whole league finds out together on <strong>Draft Day</strong>. Finish signing up to secure your spot.</p>
+    <button class="btn-sd-close" onclick="closeSortingDone()">Lock It In 🏀</button>
+  </div>
+</div>
+
+</body>
+</html>
