@@ -1940,7 +1940,7 @@
         <div class="check">✅</div>
         <h3>You're on the list!</h3>
         <p>We'll reach out when enough players have signed up and teams are ready to form. Stay ready.</p>
-        <a id="viewCardBtn" href="playercard.html" style="display:inline-block;margin-top:1rem;background:var(--orange);color:#fff;text-decoration:none;padding:0.75rem 1.8rem;border-radius:10px;font-size:0.9rem;font-weight:800;transition:background 0.2s;" onmouseover="this.style.background='#e05a0e'" onmouseout="this.style.background='var(--orange)'">
+        <a id="viewCardBtn" href="javascript:void(0)" onclick="document.getElementById('bioPage').classList.add('active')" style="display:inline-block;margin-top:1rem;background:var(--orange);color:#fff;text-decoration:none;padding:0.75rem 1.8rem;border-radius:10px;font-size:0.9rem;font-weight:800;transition:background 0.2s;" onmouseover="this.style.background='#e05a0e'" onmouseout="this.style.background='var(--orange)'">
           🏀 View My Player Card
         </a>
       </div>
@@ -2416,7 +2416,7 @@
     <div class="step">
       <div class="step-icon">✍️</div>
       <h3>Sign Up</h3>
-      <p>Fill in your name, email, position, and skill level. Free and fast.</p>
+      <p>Fill in your name, email, format, and date of birth. Free and fast.</p>
     </div>
     <div class="step">
       <div class="step-icon">👥</div>
@@ -2513,8 +2513,8 @@
   <p style="color:var(--gray);font-size:0.95rem;margin-bottom:2rem;max-width:460px;margin-left:auto;margin-right:auto;">Reach out before you sign up, after you sign up, or just to show love. We're building this community together.</p>
   <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem;">
     <a href="mailto:hello@hooperquest32.com" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,107,26,0.1);border:1px solid rgba(255,107,26,0.3);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📧 hello@hooperquest32.com</a>
-    <a href="#" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📸 @HooperQuest32</a>
-    <a href="#" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">🎵 @HooperQuest32</a>
+    <a href="https://instagram.com/hooperquest32" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📸 @HooperQuest32</a>
+    <a href="https://tiktok.com/@hooperquest32" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">🎵 @HooperQuest32</a>
   </div>
   <div style="background:rgba(255,107,26,0.06);border:1px solid rgba(255,107,26,0.15);border-radius:14px;padding:1.8rem;max-width:520px;margin:0 auto;">
     <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;">
@@ -2533,7 +2533,7 @@
 <footer style="text-align:center;padding:2rem 1.5rem;border-top:1px solid rgba(255,255,255,0.06);">
   <div style="font-size:1.1rem;font-weight:900;color:var(--white);margin-bottom:0.5rem;">Hooper<span style="color:var(--orange);">Quest</span>32</div>
   <p style="font-size:0.75rem;color:var(--gray);letter-spacing:1px;margin-bottom:1rem;">ONE POSSESSION. <span style="color:var(--orange);">INFINITE GROWTH.</span> ENDLESS PURSUIT.</p>
-  <p style="font-size:0.75rem;color:#555;">© 2025 HooperQuest32. All rights reserved. &nbsp;·&nbsp; Built for the community. &nbsp;·&nbsp; <a onclick="openModal('liabilityModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Liability Waiver</a> &nbsp;·&nbsp; <a onclick="openModal('mediaModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Media Consent</a></p>
+  <p style="font-size:0.75rem;color:#555;">© 2026 HooperQuest32. All rights reserved. &nbsp;·&nbsp; Built for the community. &nbsp;·&nbsp; <a onclick="openModal('liabilityModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Liability Waiver</a> &nbsp;·&nbsp; <a onclick="openModal('mediaModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Media Consent</a></p>
 </footer>
 
 <!-- DRAFT OVERLAY -->
@@ -3257,12 +3257,12 @@
     var content=document.getElementById('mgContent');
     if(round.type==='color'){
       content.innerHTML='<div class="mg-color-grid">'+round.choices.map(function(c,i){
-        return '<div class="mg-color-swatch" style="background:'+c.color+'" onclick="mgPickColor('+i+',''+c.guild+'')"></div>';
+        return '<div class="mg-color-swatch" style="background:'+c.color+'" onclick="mgPickColor('+i+',\''+c.guild+'\')"></div>';
       }).join('')+'</div>';
       startMgTimer(5);
     } else if(round.type==='choice'){
       content.innerHTML='<div class="mg-choice-grid '+round.cols+'">'+round.choices.map(function(c,i){
-        return '<button class="mg-choice-btn'+(c.wildcard?' wildcard':'')+'" onclick="mgPickChoice('+i+',''+(c.guild||'')+'')"><span class="mg-choice-emoji">'+c.emoji+'</span><span class="mg-choice-name">'+c.name+'</span></button>';
+        return '<button class="mg-choice-btn'+(c.wildcard?' wildcard':'')+'" onclick="mgPickChoice('+i+',\''+(c.guild||'')+'\')"><span class="mg-choice-emoji">'+c.emoji+'</span><span class="mg-choice-name">'+c.name+'</span></button>';
       }).join('')+'</div>';
       startMgTimer(5);
     } else if(round.type==='wheel'){
