@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HooperQuest32</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     /* PASSWORD GATE */
     #pw-gate {
@@ -1757,6 +1760,57 @@
       border-top: 1px solid rgba(255,255,255,0.06);
     }
     footer span { color: var(--orange); }
+    /* ── SORTING TRIGGER ── */
+    .sorting-trigger { margin-bottom: 1rem; }
+    .sorting-locked-notice { background: rgba(150,50,220,0.06); border: 1px solid rgba(150,50,220,0.2); border-radius: 14px; padding: 1.5rem; text-align: center; }
+    .sorting-lock-icon { font-size: 1.8rem; display: block; margin-bottom: 0.5rem; }
+    .sorting-label { font-size: 0.95rem; font-weight: 800; display: block; margin-bottom: 0.35rem; color: var(--white); }
+    .sorting-sub { font-size: 0.8rem; color: var(--gray); margin-bottom: 1.2rem; line-height: 1.5; display: block; }
+    .btn-begin-sorting { width: 100%; background: linear-gradient(135deg, #9632DC, #6B21A8); border: none; border-radius: 10px; padding: 0.9rem; color: #fff; font-size: 0.95rem; font-weight: 800; cursor: pointer; font-family: inherit; letter-spacing: 0.5px; transition: opacity 0.2s, transform 0.1s; }
+    .btn-begin-sorting:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-begin-sorting:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+    .sorting-complete { background: rgba(0,200,100,0.06); border: 1px solid rgba(0,200,100,0.25); border-radius: 14px; padding: 1.2rem; text-align: center; }
+    .sorting-done-icon-small { font-size: 1.8rem; display: block; margin-bottom: 0.4rem; }
+    .sorting-done-text { font-size: 0.88rem; color: #00C864; font-weight: 700; }
+    .minigame-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 500; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+    .minigame-overlay.active { display: flex; }
+    .mg-container { width: 100%; max-width: 480px; }
+    .mg-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .mg-progress { flex: 1; }
+    .mg-round-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); display: block; margin-bottom: 0.4rem; }
+    .mg-progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .mg-progress-fill { height: 100%; background: var(--orange); border-radius: 2px; transition: width 0.3s ease; }
+    .mg-timer { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,107,26,0.15); border: 2px solid rgba(255,107,26,0.4); color: var(--orange); font-size: 1.1rem; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mg-timer.urgent { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.15); }
+    .mg-category { text-align: center; font-size: 0.72rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); margin-top: 1.5rem; }
+    .mg-color-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.6rem; }
+    .mg-color-swatch { height: 64px; border-radius: 12px; cursor: pointer; border: 3px solid transparent; transition: transform 0.15s, border-color 0.15s; }
+    .mg-color-swatch:hover { transform: scale(1.06); }
+    .mg-color-swatch.picked { border-color: #fff; transform: scale(1.08); }
+    .mg-choice-grid { display: grid; gap: 0.75rem; }
+    .mg-choice-grid.four { grid-template-columns: 1fr 1fr; }
+    .mg-choice-grid.five { grid-template-columns: 1fr 1fr; }
+    .mg-choice-btn { background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.1rem 0.75rem; cursor: pointer; color: var(--white); font-family: inherit; transition: all 0.15s; text-align: center; }
+    .mg-choice-btn:hover { border-color: rgba(255,107,26,0.5); background: rgba(255,107,26,0.08); }
+    .mg-choice-btn.picked { border-color: var(--orange); background: rgba(255,107,26,0.15); }
+    .mg-choice-btn.wildcard { border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.04); }
+    .mg-choice-btn.wildcard.picked { border-color: #FFD700; background: rgba(255,215,0,0.15); }
+    .mg-choice-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+    .mg-choice-name { font-size: 0.85rem; font-weight: 800; }
+    .mg-wheel-wrap { text-align: center; }
+    .mg-wheel-canvas { display: block; margin: 0 auto 1.2rem; border-radius: 50%; }
+    .mg-lever-btn { width: 100%; background: var(--orange); border: none; border-radius: 12px; padding: 1rem; color: #fff; font-size: 1rem; font-weight: 900; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+    .mg-lever-btn:hover { opacity: 0.88; }
+    .mg-lever-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .mg-wheel-result { display: none; font-size: 1.4rem; font-weight: 900; color: var(--orange); margin-top: 0.75rem; }
+    .sorting-done-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 501; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+    .sorting-done-overlay.active { display: flex; }
+    .sd-big-icon { font-size: 4rem; margin-bottom: 1.5rem; animation: sdpulse 1.5s ease-in-out infinite; }
+    @keyframes sdpulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+    .sd-title { font-size: clamp(1.6rem,5vw,2.4rem); font-weight: 900; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .sd-sub { font-size: 0.95rem; color: var(--gray); max-width: 360px; line-height: 1.6; margin-bottom: 2rem; }
+    .sd-sub strong { color: var(--orange); }
+    .btn-sd-close { background: var(--orange); border: none; border-radius: 12px; padding: 0.9rem 2.5rem; color: #fff; font-size: 1rem; font-weight: 800; cursor: pointer; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -1849,30 +1903,18 @@
           👋 Since you're under 18, a <strong style="color:#FFD700">parent or guardian must consent</strong> before your registration is complete. You'll be prompted to provide their details after submitting this form.
         </div>
 
-        <!-- GUILD SELECTION -->
-        <div class="guild-select-section">
-          <span class="guild-select-label">Choose your guild</span>
-          <div class="guild-cards-grid">
-            <button type="button" class="guild-card-btn" id="guild-sharpened" style="--guild-color:#DC3232" onclick="selectGuild('sharpened')">
-              <span class="guild-emblem">⚔️</span>
-              <span class="guild-card-name">The Sharpened</span>
-              <span class="guild-card-motto">One weapon. Mastered. Repeated forever.</span>
-            </button>
-            <button type="button" class="guild-card-btn" id="guild-seekers" style="--guild-color:#FF6B1A" onclick="selectGuild('seekers')">
-              <span class="guild-emblem">🧭</span>
-              <span class="guild-card-name">The Seekers</span>
-              <span class="guild-card-motto">Always moving. Always chasing.</span>
-            </button>
-            <button type="button" class="guild-card-btn" id="guild-architects" style="--guild-color:#3282DC" onclick="selectGuild('architects')">
-              <span class="guild-emblem">⚙️🗝️</span>
-              <span class="guild-card-name">The Architects</span>
-              <span class="guild-card-motto">They don't play the game. They solve it.</span>
-            </button>
-            <button type="button" class="guild-card-btn" id="guild-unknown" style="--guild-color:#9632DC" onclick="selectGuild('unknown')">
-              <span class="guild-emblem">👁️🌀</span>
-              <span class="guild-card-name">The Unknown</span>
-              <span class="guild-card-motto">Watching everything. Known by no one.</span>
-            </button>
+        <!-- GUILD SORTING TRIGGER -->
+        <div class="sorting-trigger" id="sortingTrigger">
+          <div class="sorting-locked-notice" id="sortingLockedNotice">
+            <span class="sorting-lock-icon">🔮</span>
+            <span class="sorting-label">Your guild is not chosen. It is revealed.</span>
+            <span class="sorting-sub">Complete a 5-round instinct game — under 30 seconds. The court decides your guild. You will find out on Draft Day.</span>
+            <button type="button" class="btn-begin-sorting" id="btnBeginSorting" onclick="launchMiniGame()">Begin Your Sorting ⚡</button>
+          </div>
+          <div class="sorting-complete" id="sortingComplete" style="display:none">
+            <span class="sorting-done-icon-small">✅</span>
+            <p class="sorting-done-text">Sorting complete. Your guild will be revealed on Draft Day.</p>
+            <input type="hidden" id="hiddenGuildResult" name="guildResult" value=""/>
           </div>
         </div>
 
@@ -1898,7 +1940,7 @@
         <div class="check">✅</div>
         <h3>You're on the list!</h3>
         <p>We'll reach out when enough players have signed up and teams are ready to form. Stay ready.</p>
-        <a id="viewCardBtn" href="playercard.html" style="display:inline-block;margin-top:1rem;background:var(--orange);color:#fff;text-decoration:none;padding:0.75rem 1.8rem;border-radius:10px;font-size:0.9rem;font-weight:800;transition:background 0.2s;" onmouseover="this.style.background='#e05a0e'" onmouseout="this.style.background='var(--orange)'">
+        <a id="viewCardBtn" href="javascript:void(0)" onclick="document.getElementById('bioPage').classList.add('active')" style="display:inline-block;margin-top:1rem;background:var(--orange);color:#fff;text-decoration:none;padding:0.75rem 1.8rem;border-radius:10px;font-size:0.9rem;font-weight:800;transition:background 0.2s;" onmouseover="this.style.background='#e05a0e'" onmouseout="this.style.background='var(--orange)'">
           🏀 View My Player Card
         </a>
       </div>
@@ -2052,8 +2094,8 @@
 
     <div class="guilds-header">
       <span class="section-tag">Season 1</span>
-      <h2>Choose Your Guild.</h2>
-      <p>Four guilds. One quest. Every player belongs to a house — your guild is your identity, your banner, your community within HooperQuest32.</p>
+      <h2>Your Guild Awaits.</h2>
+      <p>Four guilds. One quest. Every player is sorted by instinct — your guild is your identity, your banner, your community within HooperQuest32. Revealed on Draft Day.</p>
     </div>
     <div class="keeper-note">Overseen by <span>The Keeper</span> · Min. 5 players to activate a guild · Max 3 captains per guild</div>
 
@@ -2071,7 +2113,7 @@
           <span><strong id="s-squads">0</strong>Squads</span>
           <span><strong id="s-spots">5</strong>Min to activate</span>
         </div>
-        <button class="guild-join-btn" onclick="joinGuildScroll('sharpened')">Join The Sharpened ⚔️</button>
+        <button class="guild-join-btn" onclick="joinGuildScroll('sharpened')">Enter The Sorting ⚡</button>
       </div>
 
       <!-- THE SEEKERS -->
@@ -2086,7 +2128,7 @@
           <span><strong id="q-squads">0</strong>Squads</span>
           <span><strong id="q-spots">5</strong>Min to activate</span>
         </div>
-        <button class="guild-join-btn" onclick="joinGuildScroll('seekers')">Join The Seekers 🧭</button>
+        <button class="guild-join-btn" onclick="joinGuildScroll('seekers')">Enter The Sorting ⚡</button>
       </div>
 
       <!-- THE ARCHITECTS -->
@@ -2101,7 +2143,7 @@
           <span><strong id="a-squads">0</strong>Squads</span>
           <span><strong id="a-spots">5</strong>Min to activate</span>
         </div>
-        <button class="guild-join-btn" onclick="joinGuildScroll('architects')">Join The Architects ⚙️</button>
+        <button class="guild-join-btn" onclick="joinGuildScroll('architects')">Enter The Sorting ⚡</button>
       </div>
 
       <!-- THE UNKNOWN -->
@@ -2116,7 +2158,7 @@
           <span><strong id="u-squads">0</strong>Squads</span>
           <span><strong id="u-spots">5</strong>Min to activate</span>
         </div>
-        <button class="guild-join-btn" onclick="joinGuildScroll('unknown')">Join The Unknown 👁️</button>
+        <button class="guild-join-btn" onclick="joinGuildScroll('unknown')">Enter The Sorting ⚡</button>
       </div>
 
     </div>
@@ -2158,107 +2200,56 @@
       </div>
     </div>
 
-    <!-- FOUND A GUILD LINK -->
+    <!-- GUILD GROWTH TEASER -->
     <div style="text-align:center;margin-top:2.5rem;padding-top:2.5rem;border-top:1px solid rgba(255,255,255,0.06);">
-      <p style="font-size:0.88rem;color:var(--gray);margin-bottom:1rem;">Want to build your own house in Season 2?</p>
-      <a href="#found-guild" style="display:inline-flex;align-items:center;gap:0.6rem;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);color:#FFD700;text-decoration:none;padding:0.75rem 1.8rem;border-radius:100px;font-size:0.9rem;font-weight:800;" onmouseover="this.style.background='rgba(255,215,0,0.15)'" onmouseout="this.style.background='rgba(255,215,0,0.08)'">
-        👑 Found a Guild — Season 2
-      </a>
+      <p style="font-size:0.75rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--orange);margin-bottom:0.6rem;">The League Grows With You</p>
+      <p style="font-size:0.88rem;color:var(--gray);max-width:480px;margin:0 auto;line-height:1.7;">New guilds unlock when the player base grows. If Season 2 signups hit the threshold, a new Form activates — one guild per season, earned by the community.</p>
     </div>
 
   </div>
 </section>
 
-<!-- GUILD FORMATION -->
+<!-- GUILD GROWTH -->
 <section class="guild-formation" id="found-guild">
   <div class="guild-formation-inner">
 
     <div class="guild-formation-header">
-      <span class="section-tag">Build Your House</span>
-      <h2>How to Form a Guild</h2>
+      <span class="section-tag">Season 2 & Beyond</span>
+      <h2>The League Expands.</h2>
       <p>Guilds are the heart of HooperQuest32. Every guild starts with one founder who believes enough to build something from nothing. Here's how it works.</p>
     </div>
 
     <div class="s2-banner">
-      <span class="s2-pill">Season 2</span>
-      <span>New guild creation opens in Season 2. Season 1 players join one of the 4 founding guilds. Register your interest below — The Keeper reviews all applications.</span>
+      <span class="s2-pill">How It Works</span>
+      <span>New guilds don't get created — they get <strong>earned</strong>. When signups hit the threshold, the next Form activates. One new guild per season, unlocked by the community.</span>
     </div>
 
     <!-- 5 STEPS -->
     <div class="formation-steps">
       <div class="formation-step">
         <div class="step-num">1</div>
-        <span class="step-icon">✍️</span>
-        <h4>Express Intent</h4>
-        <p>Sign up as a player, then submit a guild founding request. Propose your guild name, squad name, and your vision for the house.</p>
+        <span class="step-icon">🏀</span>
+        <h4>Season 1 — 4 Guilds</h4>
+        <p>The 4 founding guilds are active. Every player is sorted by instinct. The quest begins here.</p>
       </div>
       <div class="formation-step">
         <div class="step-num">2</div>
-        <span class="step-icon">🏛️</span>
-        <h4>Keeper Reviews</h4>
-        <p>The Keeper reviews your application. Name must be clean and culturally aligned with HQ32. Approval or feedback within 48 hours.</p>
+        <span class="step-icon">📈</span>
+        <h4>Threshold Hit</h4>
+        <p>If Season 2 signups hit the player threshold, The Keeper activates the next Form. One new guild — earned by the community, not requested by individuals.</p>
       </div>
       <div class="formation-step">
         <div class="step-num">3</div>
-        <span class="step-icon">📣</span>
-        <h4>Recruitment Window</h4>
-        <p>Once approved, you have a <strong style="color:var(--white)">2-week window</strong> to recruit at least 5 players to your guild. They sign up and select your guild at registration.</p>
-      </div>
-      <div class="formation-step">
-        <div class="step-num">4</div>
-        <span class="step-icon">⚡</span>
-        <h4>Guild Activates</h4>
-        <p>Hit 5 players in the window and The Keeper officially activates your guild. Your emblem, banner, and house are live. The quest begins.</p>
-      </div>
-      <div class="formation-step">
-        <div class="step-num">5</div>
-        <span class="step-icon">👑</span>
-        <h4>Assign Captains</h4>
-        <p>As Guild Owner, assign up to 3 captains from your roster. Captains draft their squads, name their teams, and take the court under your banner.</p>
+        <span class="step-icon">🔮</span>
+        <h4>New Form Activates</h4>
+        <p>The new guild enters the sorting pool. New players can be assigned to it. The league grows, the quest deepens. Up to 7 guilds total across 7 seasons.</p>
       </div>
     </div>
 
-    <!-- FOUNDER RULES -->
-    <div class="founder-rules">
-      <h3>📋 Guild Founder Rules</h3>
-      <div class="founder-rule-item"><span class="fr-icon">✅</span><div>Minimum <strong>5 players</strong> required to activate a guild. If you don't hit 5 in the 2-week window, your application closes and you join an existing guild.</div></div>
-      <div class="founder-rule-item"><span class="fr-icon">✅</span><div>Guild name must be <strong>clean and appropriate</strong>. No offensive, sexual, or disrespectful names. The Keeper has final say.</div></div>
-      <div class="founder-rule-item"><span class="fr-icon">✅</span><div>Guild founder is the <strong>Guild Owner</strong> — you manage the roster, assign captains, and represent the house. You can play or manage from the sideline.</div></div>
-      <div class="founder-rule-item"><span class="fr-icon">✅</span><div>Max <strong>3 captains</strong> per guild. Each captain runs one squad. Squad names are subject to Keeper approval — clean names only.</div></div>
-      <div class="founder-rule-item"><span class="fr-icon">✅</span><div>Once activated, your guild carries the <strong>HQ32 guild emblem</strong> on all uniforms. All players in your guild must have the guild emblem on their shirt.</div></div>
-      <div class="founder-rule-item"><span class="fr-icon">⚠️</span><div>Guild formation is a <strong>Season 2 feature</strong>. Season 1 has 4 founding guilds only. Register your interest now so you're first in line when Season 2 opens.</div></div>
-    </div>
-
-    <!-- FOUNDER INTEREST FORM -->
-    <div class="founder-register-box">
-      <h3>👑 Register as a Future Founder</h3>
-      <p>Not ready to join an existing guild? Want to build your own house in Season 2? Tell The Keeper. We'll reach out when guild founding opens.</p>
-
-      <div class="founder-form" id="founderForm">
-        <div class="founder-field">
-          <label>Your Name</label>
-          <input type="text" id="founderName" placeholder="First and last name"/>
-        </div>
-        <div class="founder-field">
-          <label>Email</label>
-          <input type="email" id="founderEmail" placeholder="Your email address"/>
-        </div>
-        <div class="founder-field">
-          <label>Proposed Guild Name</label>
-          <input type="text" id="founderGuildName" placeholder="What will you call your house?"/>
-        </div>
-        <div class="founder-field">
-          <label>Your Vision <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(160,160,176,0.5)">— What is your guild about?</span></label>
-          <textarea id="founderVision" placeholder="Describe the identity, mentality, and purpose of your guild..."></textarea>
-        </div>
-        <button class="btn-founder-submit" onclick="submitFounderApp()">🏛️ Submit to The Keeper</button>
-      </div>
-
-      <div class="founder-success" id="founderSuccess">
-        <div class="fs-icon">👑</div>
-        <h4>Application Received</h4>
-        <p>The Keeper has your submission. We'll review your guild vision and reach out before Season 2 opens. Stay ready — the quest needs more houses.</p>
-      </div>
+    <div style="text-align:center;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:16px;padding:2rem;">
+      <div style="font-size:2rem;margin-bottom:0.75rem;">👁️</div>
+      <p style="font-size:0.75rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#FFD700;margin-bottom:0.5rem;">7 Forms. 7 Seasons.</p>
+      <p style="font-size:0.9rem;color:var(--gray);max-width:480px;margin:0 auto;line-height:1.7;">The remaining Forms are already designed. They don't get created — they get unlocked. Show up, grow the community, and the next guild reveals itself.</p>
     </div>
 
   </div>
@@ -2371,10 +2362,10 @@
     <!-- GAME RULES -->
     <div class="rules-block">
       <h3>🕐 Game Format & Timing</h3>
-      <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><strong>Formats available:</strong> 3v3, 4v4, and 5v5. Players select their format at signup.</div></div>
-      <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><strong>Game structure:</strong> All games are played in <strong>2 halves</strong>. Half lengths by format: <strong>3v3 = 10 min</strong> · <strong>4v4 = 12 min</strong> · <strong>5v5 = 15 min</strong>.</div></div>
+      <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><strong>Formats available:</strong> 3v3 and 4v4. Players select their format at signup. 4v4 is the default — if one or both teams are short, the game drops to 3v3.</div></div>
+      <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><strong>Game structure:</strong> All games are played in <strong>2 halves of 10 minutes each</strong>. 3-minute halftime break between halves.</div></div>
       <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><strong>Shot clock:</strong> Each possession is <strong>32 seconds</strong>. Failure to attempt a shot before the clock expires results in a turnover.</div></div>
-      <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><strong>Tiebreaker — Shootout:</strong> If the score is tied at the end of regulation, the game is decided by a <strong>shootout</strong>. Every player on the court (bench excluded) takes <strong>1 shot each</strong>. The team with the most shots made wins. <span class="tag">3v3 = 3 shots per team</span> <span class="tag">4v4 = 4 shots</span> <span class="tag">5v5 = 5 shots</span></div></div>
+      <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><strong>Tiebreaker — Shootout:</strong> If the score is tied at the end of regulation, every player (active + sub) shoots <strong>one shot each from beyond the arc</strong>. Team with the most makes wins. <span class="tag">3v3 = 4 shooters per team</span> <span class="tag">4v4 = 5 shooters per team</span> — If still tied: <strong>sudden death</strong> — one shooter each, alternating, until one makes and the other misses.</div></div>
     </div>
 
     <!-- FOUL RULES -->
@@ -2425,7 +2416,7 @@
     <div class="step">
       <div class="step-icon">✍️</div>
       <h3>Sign Up</h3>
-      <p>Fill in your name, email, position, and skill level. Free and fast.</p>
+      <p>Fill in your name, email, format, and date of birth. Free and fast.</p>
     </div>
     <div class="step">
       <div class="step-icon">👥</div>
@@ -2454,51 +2445,66 @@
     </div>
 
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What formats are available? <span class="faq-icon">+</span></button>
-      <div class="faq-a">HooperQuest32 runs <strong>3v3, 4v4, and 5v5</strong> formats. You pick your preferred format at signup. Teams are formed within the same format pool.</div>
+      <button class="faq-q">What formats are available? <span class="faq-icon">+</span></button>
+      <div class="faq-a">HooperQuest32 runs <strong>3v3 and 4v4</strong> formats. You pick your preferred format at signup. 4v4 is the default — if one or both teams are short on game day, the game drops to 3v3.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How long are the games? <span class="faq-icon">+</span></button>
-      <div class="faq-a">Games are played in <strong>2 halves</strong>. Half length depends on format: <strong>3v3 = 10 min</strong>, <strong>4v4 = 12 min</strong>, <strong>5v5 = 15 min</strong>. There is a <strong>32-second shot clock</strong> per possession.</div>
+      <button class="faq-q">How long are the games? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Games are played in <strong>2 halves of 10 minutes each</strong> — same for both 3v3 and 4v4. There is a 3-minute halftime break and a <strong>32-second shot clock</strong> per possession.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How do foul calls work? <span class="faq-icon">+</span></button>
+      <button class="faq-q">How do foul calls work? <span class="faq-icon">+</span></button>
       <div class="faq-a">Each player gets <strong>3 free foul calls</strong> per game — no challenge, no questions. From the <strong>4th foul call onward</strong>, the defensive player may challenge it. A challenge means one player from the fouling team shoots a 3-pointer. <strong>Shot made</strong> → fouling team keeps the ball (min 20 sec shot clock). <strong>Shot missed</strong> → defending team gets the ball with a fresh 32-sec clock. It's a turnover.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What happens if the game is tied? <span class="faq-icon">+</span></button>
-      <div class="faq-a">Tied games go to a <strong>shootout</strong> — just like soccer. Every player on the court (no bench players) takes <strong>one shot each</strong>. The team that makes the most shots wins. If still tied after the first round, the shootout continues until one team leads.</div>
+      <button class="faq-q">How are out of bounds calls decided? <span class="faq-icon">+</span></button>
+      <div class="faq-a"><strong>The Arrow is the Judge.</strong> When a call can't be proven — out of bounds, last touch, contested possession — we don't argue. We go to the <strong>Dispute Arrow</strong>. A coin flip at the start of every game determines which team holds the first arrow. When a dispute occurs, the arrow team gets possession immediately. No discussion, no override. The arrow then switches to the other team after every use. <strong>Refusing to respect the arrow is a conduct violation.</strong></div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Is there a cost to join? <span class="faq-icon">+</span></button>
+      <button class="faq-q">What happens if the game is tied? <span class="faq-icon">+</span></button>
+      <div class="faq-a">Tied games go to a <strong>shootout</strong>. Every player — active roster and sub — takes <strong>one shot each from beyond the arc</strong>. Most makes wins. If still tied: sudden death — one shooter per team alternating until one makes and the other misses.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Is there a cost to join? <span class="faq-icon">+</span></button>
       <div class="faq-a"><strong>No cost.</strong> HooperQuest32 is a free community league. We're here to build a hooper community — not make money. All you need to bring is your game and your respect.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Is trash talk allowed? <span class="faq-icon">+</span></button>
+      <button class="faq-q">Is trash talk allowed? <span class="faq-icon">+</span></button>
       <div class="faq-a"><strong>No.</strong> Zero tolerance. If your opponent hits a tough shot — acknowledge it and move on. HQ32 is built on respect, good sportsmanship, and love for the game. Trash talk, attitude, and ego have no place here.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Will games be recorded? <span class="faq-icon">+</span></button>
+      <button class="faq-q">Will games be recorded? <span class="faq-icon">+</span></button>
       <div class="faq-a">Yes. Games will be filmed for <strong>season and game highlights</strong>, curated for every player. By signing up, you consent to being recorded and featured in HooperQuest32 content. If you have concerns, reach out before signing up.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Can players under 18 join? <span class="faq-icon">+</span></button>
+      <button class="faq-q">Can players under 18 join? <span class="faq-icon">+</span></button>
       <div class="faq-a">Yes — the <strong>minimum age is 15</strong>. Players under 13 cannot join under any circumstances. Players aged 15–17 require a <strong>parent or legal guardian to sign a consent form</strong> before their registration is complete. The consent covers physical participation, injury risk, and media/video recording. Players under 18 will be prompted through this process automatically at signup.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Is there a dress code? <span class="faq-icon">+</span></button>
+      <button class="faq-q">Is there a dress code? <span class="faq-icon">+</span></button>
       <div class="faq-a"><strong>Yes — uniform is required to play.</strong> Every player must wear the same shirt color and design as their team, with the <strong>HQ32 logo</strong> on it. You can buy an official team jersey from our merch shop, or make your own shirt and apply an <strong>HQ32 iron-on patch</strong> (also available in the shop). Players without the correct uniform will not be permitted to play.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Can I make my own team shirt? <span class="faq-icon">+</span></button>
+      <button class="faq-q">Can I make my own team shirt? <span class="faq-icon">+</span></button>
       <div class="faq-a">Absolutely. If you want to get your shirt made elsewhere, that's fine — just make sure the color matches your team's assigned color and that you have the official <strong>HQ32 iron-on patch</strong> applied to it. Patches are available in the HQ32 merch shop.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">When and where does Season 1 start? <span class="faq-icon">+</span></button>
+      <button class="faq-q">When and where does Season 1 start? <span class="faq-icon">+</span></button>
       <div class="faq-a">We are currently working through the <strong>Parks & Recreation permit process</strong> to secure an official court for Season 1. We want a guaranteed, reliable space for every player — not a first-come-first-served situation. Location and dates will be announced once the permit is confirmed. Sign up and you'll be the first to know.</div>
     </div>
   </div>
 </section>
+
+<script>
+  // FAQ accordion — isolated block, no Firebase dependency
+  document.querySelectorAll('.faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var ans = btn.nextElementSibling;
+      btn.classList.toggle('open');
+      ans.classList.toggle('open');
+    });
+  });
+</script>
 
 <!-- CONTACT -->
 <section style="background:#0a0a0a;padding:4rem 1.5rem;text-align:center;border-top:1px solid #1a1a1a;" id="contact">
@@ -2507,8 +2513,8 @@
   <p style="color:var(--gray);font-size:0.95rem;margin-bottom:2rem;max-width:460px;margin-left:auto;margin-right:auto;">Reach out before you sign up, after you sign up, or just to show love. We're building this community together.</p>
   <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem;">
     <a href="mailto:hello@hooperquest32.com" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,107,26,0.1);border:1px solid rgba(255,107,26,0.3);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📧 hello@hooperquest32.com</a>
-    <a href="#" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📸 @HooperQuest32</a>
-    <a href="#" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">🎵 @HooperQuest32</a>
+    <a href="https://instagram.com/hooperquest32" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">📸 @HooperQuest32</a>
+    <a href="https://tiktok.com/@hooperquest32" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--white);text-decoration:none;padding:0.75rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:600;">🎵 @HooperQuest32</a>
   </div>
   <div style="background:rgba(255,107,26,0.06);border:1px solid rgba(255,107,26,0.15);border-radius:14px;padding:1.8rem;max-width:520px;margin:0 auto;">
     <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;">
@@ -2527,7 +2533,7 @@
 <footer style="text-align:center;padding:2rem 1.5rem;border-top:1px solid rgba(255,255,255,0.06);">
   <div style="font-size:1.1rem;font-weight:900;color:var(--white);margin-bottom:0.5rem;">Hooper<span style="color:var(--orange);">Quest</span>32</div>
   <p style="font-size:0.75rem;color:var(--gray);letter-spacing:1px;margin-bottom:1rem;">ONE POSSESSION. <span style="color:var(--orange);">INFINITE GROWTH.</span> ENDLESS PURSUIT.</p>
-  <p style="font-size:0.75rem;color:#555;">© 2025 HooperQuest32. All rights reserved. &nbsp;·&nbsp; Built for the community. &nbsp;·&nbsp; <a onclick="openModal('liabilityModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Liability Waiver</a> &nbsp;·&nbsp; <a onclick="openModal('mediaModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Media Consent</a></p>
+  <p style="font-size:0.75rem;color:#555;">© 2026 HooperQuest32. All rights reserved. &nbsp;·&nbsp; Built for the community. &nbsp;·&nbsp; <a onclick="openModal('liabilityModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Liability Waiver</a> &nbsp;·&nbsp; <a onclick="openModal('mediaModal')" style="color:#666;cursor:pointer;text-decoration:underline;">Media Consent</a></p>
 </footer>
 
 <!-- DRAFT OVERLAY -->
@@ -2749,6 +2755,20 @@
 </div>
 
 <script>
+  // ─── FIREBASE INIT ─────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCobcuomSCvtfnlmA0gERFD0rsmNaSY-k",
+    authDomain: "hooper-quest32-g6u3nh.firebaseapp.com",
+    projectId: "hooper-quest32-g6u3nh",
+    storageBucket: "hooper-quest32-g6u3nh.firebasestorage.app",
+    messagingSenderId: "314783672229",
+    appId: "1:314783672229:web:d9fae34e86dbc88b28aa4c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
   // ─── AGE GATE & PARENTAL CONSENT ───────────────────────────
   let playerAge = null;
   let parentConsentGiven = false;
@@ -2824,44 +2844,82 @@
     document.getElementById('successMsg').style.display = 'none';
   }
 
-  function finalizeSignup() {
-    extra++;
-    localStorage.setItem('hq32_extra', extra);
-    updateCounter();
-    document.getElementById('signupForm').style.display = 'none';
-    document.getElementById('successMsg').style.display = 'block';
+  async function finalizeSignup() {
+    const submitBtn = document.querySelector('.btn-signup');
+    const origText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Registering...';
+
     const fn = document.getElementById('firstName').value.trim();
     const ln = document.getElementById('lastName').value.trim();
     const email = document.getElementById('email').value.trim();
     const dob = document.getElementById('playerDOB').value;
-    sessionStorage.setItem('hq32_name', ln ? `${fn} ${ln}` : fn);
-    sessionStorage.setItem('hq32_guild', selectedGuild);
-    sessionStorage.setItem('hq32_format', selectedFormat);
-    const pid = 'HQ32-' + String(BASE_COUNT + extra).padStart(4, '0');
-    sessionStorage.setItem('hq32_pid', pid);
-    if (selectedGuild) {
-      guildCounts[selectedGuild] = (guildCounts[selectedGuild] || 0) + 1;
-      localStorage.setItem('hq32_guilds', JSON.stringify(guildCounts));
-      updateGuildCounters();
-    }
-    // ── Save to Firestore ──────────────────────────────────────────────
-    if (window._db) {
-      window._db.collection('players').add({
-        pid: pid,
+
+    try {
+      const statsRef = db.collection('meta').doc('stats');
+      const guildRef = db.collection('meta').doc('guildCounts');
+      let playerNum = 0;
+
+      await db.runTransaction(async (tx) => {
+        const statsDoc = await tx.get(statsRef);
+        playerNum = (statsDoc.exists ? (statsDoc.data().totalRegistrations || 0) : 0) + 1;
+        if (statsDoc.exists) {
+          tx.update(statsRef, { totalRegistrations: playerNum });
+        } else {
+          tx.set(statsRef, { totalRegistrations: playerNum });
+        }
+        if (selectedGuild) {
+          const guildDoc = await tx.get(guildRef);
+          if (guildDoc.exists) {
+            tx.update(guildRef, { [selectedGuild]: firebase.firestore.FieldValue.increment(1) });
+          } else {
+            tx.set(guildRef, { [selectedGuild]: 1 });
+          }
+        }
+      });
+
+      const pid = 'HQ32-' + String(playerNum).padStart(4, '0');
+
+      const regData = {
         firstName: fn,
-        lastName: ln,
+        lastName: ln || '',
         email: email,
         dob: dob,
-        guild: selectedGuild || null,
-        format: selectedFormat || null,
-        signedUpAt: new Date().toISOString()
-      }).catch(err => console.warn('Firestore write failed:', err));
+        format: selectedFormat || '',
+        guild: selectedGuild || '',
+        playerId: pid,
+        registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (playerAge < 18 && parentConsentGiven) {
+        regData.parentName = document.getElementById('parentName').value.trim();
+        regData.parentEmail = document.getElementById('parentEmail').value.trim();
+        regData.parentPhone = document.getElementById('parentPhone').value.trim();
+        regData.parentRelation = document.getElementById('parentRelation').value.trim();
+      }
+
+      await db.collection('registrations').add(regData);
+
+      sessionStorage.setItem('hq32_name', ln ? `${fn} ${ln}` : fn);
+      sessionStorage.setItem('hq32_guild', selectedGuild);
+      sessionStorage.setItem('hq32_format', selectedFormat);
+      sessionStorage.setItem('hq32_pid', pid);
+
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+
+      setTimeout(() => { document.getElementById('bioPage').classList.add('active'); }, 800);
+
+    } catch (err) {
+      console.error('Registration error:', err);
+      submitBtn.disabled = false;
+      submitBtn.textContent = origText;
+      alert('Something went wrong registering you. Please try again.');
     }
-    setTimeout(() => { document.getElementById('bioPage').classList.add('active'); }, 800);
   }
 
   // ─── FOUNDER APPLICATION ───────────────────────────────────
-  function submitFounderApp() {
+  async function submitFounderApp() {
     const name  = document.getElementById('founderName').value.trim();
     const email = document.getElementById('founderEmail').value.trim();
     const guild = document.getElementById('founderGuildName').value.trim();
@@ -2869,8 +2927,18 @@
       alert('Please enter your name and email so The Keeper can reach you.');
       return;
     }
-    document.getElementById('founderForm').style.display = 'none';
-    document.getElementById('founderSuccess').style.display = 'block';
+    try {
+      await db.collection('founderApps').add({
+        name, email,
+        proposedGuild: guild || '',
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      document.getElementById('founderForm').style.display = 'none';
+      document.getElementById('founderSuccess').style.display = 'block';
+    } catch (err) {
+      console.error('Founder app error:', err);
+      alert('Something went wrong. Please try again.');
+    }
   }
 
   // ─── GUILD SYSTEM ──────────────────────────────────────────
@@ -2883,20 +2951,27 @@
     unknown:   { name: 'The Unknown',   color: '#9632DC', emblem: '👁️' },
   };
 
-  // Load guild counts from localStorage
-  const guildCounts = JSON.parse(localStorage.getItem('hq32_guilds') || '{"sharpened":0,"seekers":0,"architects":0,"unknown":0}');
+  // ─── REAL-TIME FIRESTORE LISTENERS ─────────────────────────
+  // Player count
+  db.collection('meta').doc('stats').onSnapshot(doc => {
+    const total = doc.exists ? (doc.data().totalRegistrations || 0) : 0;
+    document.getElementById('playerCount').textContent = total;
+    const perTeam = selectedFormat === '4v4' ? 4 : 3;
+    document.getElementById('teamCount').textContent = Math.floor(total / perTeam);
+  });
 
-  function updateGuildCounters() {
-    Object.keys(guildCounts).forEach(g => {
+  // Guild counts
+  db.collection('meta').doc('guildCounts').onSnapshot(doc => {
+    if (!doc.exists) return;
+    const data = doc.data();
+    Object.keys(GUILDS).forEach(g => {
       const prefix = g[0];
       const el = document.getElementById(`${prefix}-count`);
-      if (el) el.textContent = guildCounts[g];
-      // Squads = floor(members / 5)
+      if (el) el.textContent = data[g] || 0;
       const sq = document.getElementById(`${prefix}-squads`);
-      if (sq) sq.textContent = Math.floor(guildCounts[g] / 5);
+      if (sq) sq.textContent = Math.floor((data[g] || 0) / 5);
     });
-  }
-  updateGuildCounters();
+  });
 
   function selectGuild(guild) {
     selectedGuild = guild;
@@ -2906,7 +2981,6 @@
   }
 
   function joinGuildScroll(guild) {
-    selectGuild(guild);
     document.getElementById('signup').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -2917,13 +2991,13 @@
     { id:1, name:'Marcus T.', format:'3v3', avatar:'🏀' },
     { id:2, name:'Darius W.', format:'4v4', avatar:'🏀' },
     { id:3, name:'Kevin J.', format:'3v3', avatar:'🏀' },
-    { id:4, name:'Jordan L.', format:'5v5', avatar:'🏀' },
+    { id:4, name:'Jordan L.', format:'4v4', avatar:'🏀' },
     { id:5, name:'Amir P.', format:'4v4', avatar:'🏀' },
     { id:6, name:'Trey B.', format:'3v3', avatar:'🏀' },
-    { id:7, name:'Isaiah C.', format:'5v5', avatar:'🏀' },
+    { id:7, name:'Isaiah C.', format:'3v3', avatar:'🏀' },
     { id:8, name:'Devon M.', format:'4v4', avatar:'🏀' },
     { id:9, name:'Jalen F.', format:'3v3', avatar:'🏀' },
-    { id:10, name:'Cam R.', format:'5v5', avatar:'🏀' },
+    { id:10, name:'Cam R.', format:'4v4', avatar:'🏀' },
   ];
 
   // Set to true to open the draft (organizer control)
@@ -3028,11 +3102,11 @@
   });
 
   // FAQ accordion
-  function toggleFaq(btn) {
+  window.toggleFaq = function(btn) {
     const answer = btn.nextElementSibling;
     btn.classList.toggle('open');
     answer.classList.toggle('open');
-  }
+  };
 
   let selectedFormat = '';
 
@@ -3056,16 +3130,7 @@
     reader.readAsDataURL(file);
   });
 
-  // Counter
-  const BASE_COUNT = 47;
-  let extra = parseInt(localStorage.getItem('hq32_extra') || '0');
-  function updateCounter() {
-    const total = BASE_COUNT + extra;
-    const perTeam = selectedFormat === '4v4' ? 4 : 3;
-    document.getElementById('playerCount').textContent = total;
-    document.getElementById('teamCount').textContent = Math.floor(total / perTeam);
-  }
-  updateCounter();
+  // Counter is driven by Firestore real-time listener above
 
   document.getElementById('signupForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -3140,22 +3205,162 @@
   function closeBio() {
     document.getElementById('bioPage').classList.remove('active');
   }
-</script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBCobcuomSCvtfnlmA0gERFD0rsmNaSY-k",
-      authDomain: "hooper-quest32-g6u3nh.firebaseapp.com",
-      projectId: "hooper-quest32-g6u3nh",
-      storageBucket: "hooper-quest32-g6u3nh.firebasestorage.app",
-      messagingSenderId: "314783672229",
-      appId: "1:314783672229:web:d9fae34e86dbc88b28aa4c"
-    };
-    firebase.initializeApp(firebaseConfig);
-    window._db = firebase.firestore();
-  </script>
+  // ─── MINI GAME — INSTINCT SORTING ────────────────────────────────────────
+  const MG_ROUNDS = [
+    { category:'COLOR', type:'color', choices:[
+        {color:'#8B0000',guild:'sharpened'},{color:'#8B4513',guild:'sharpened'},
+        {color:'#FF6B1A',guild:'seekers'  },{color:'#FFB347',guild:'seekers'  },
+        {color:'#7B2FBE',guild:'unknown'  },{color:'#C8A2C8',guild:'unknown'  },
+        {color:'#1B3A8C',guild:'architects'},{color:'#008080',guild:'architects'}
+    ]},
+    { category:'ANIMAL', type:'choice', cols:'four', choices:[
+        {emoji:'🐆',name:'Leopard',    guild:'sharpened'},
+        {emoji:'🐺',name:'Wolf',        guild:'seekers'  },
+        {emoji:'🦅',name:'Eagle',       guild:'unknown'  },
+        {emoji:'🦁',name:'Lion',        guild:'architects'}
+    ]},
+    { category:'WEAPON', type:'choice', cols:'four', choices:[
+        {emoji:'⚔️', name:'Sword',      guild:'sharpened'},
+        {emoji:'🪃', name:'Boomerang',  guild:'seekers'  },
+        {emoji:'💣', name:'Cannon',     guild:'unknown'  },
+        {emoji:'🏹', name:'Bow & Arrow',guild:'architects'}
+    ]},
+    { category:'ELEMENT', type:'choice', cols:'five', choices:[
+        {emoji:'🔩',name:'Metal',    guild:'sharpened'},
+        {emoji:'🔥',name:'Fire',     guild:'seekers'  },
+        {emoji:'💧',name:'Water',    guild:'unknown'  },
+        {emoji:'🌍',name:'Earth',    guild:'architects'},
+        {emoji:'⚡',name:'Lightning',guild:null,wildcard:true}
+    ]},
+    { category:'THE WHEEL', type:'wheel' }
+  ];
+  var mgCurrentRound=0, mgScores={sharpened:0,seekers:0,architects:0,unknown:0};
+  var mgTimerInterval=null, mgTimeLeft=5, mgPicked=false;
+
+  function launchMiniGame(){
+    if(playerAge===null||playerAge<15){
+      document.getElementById('ageWarning').classList.add('show');
+      document.getElementById('playerDOB').focus(); return;
+    }
+    mgCurrentRound=0; mgScores={sharpened:0,seekers:0,architects:0,unknown:0};
+    document.getElementById('minigameOverlay').classList.add('active');
+    renderMgRound();
+  }
+
+  function renderMgRound(){
+    var round=MG_ROUNDS[mgCurrentRound];
+    document.getElementById('mgRoundNum').textContent=mgCurrentRound+1;
+    document.getElementById('mgProgressFill').style.width=(((mgCurrentRound+1)/5)*100)+'%';
+    document.getElementById('mgCategory').textContent=round.category;
+    mgPicked=false;
+    var content=document.getElementById('mgContent');
+    if(round.type==='color'){
+      content.innerHTML='<div class="mg-color-grid">'+round.choices.map(function(c,i){
+        return '<div class="mg-color-swatch" style="background:'+c.color+'" onclick="mgPickColor('+i+',\''+c.guild+'\')"></div>';
+      }).join('')+'</div>';
+      startMgTimer(5);
+    } else if(round.type==='choice'){
+      content.innerHTML='<div class="mg-choice-grid '+round.cols+'">'+round.choices.map(function(c,i){
+        return '<button class="mg-choice-btn'+(c.wildcard?' wildcard':'')+'" onclick="mgPickChoice('+i+',\''+(c.guild||'')+'\')"><span class="mg-choice-emoji">'+c.emoji+'</span><span class="mg-choice-name">'+c.name+'</span></button>';
+      }).join('')+'</div>';
+      startMgTimer(5);
+    } else if(round.type==='wheel'){
+      content.innerHTML='<div class="mg-wheel-wrap"><canvas class="mg-wheel-canvas" id="mgWheelCanvas" width="260" height="260"></canvas><div class="mg-wheel-result" id="mgWheelResult"></div><button class="mg-lever-btn" id="mgLeverBtn" onclick="spinWheel()">🎰 Pull the Lever</button></div>';
+      drawWheel(0); stopMgTimer();
+      document.getElementById('mgTimer').textContent='—';
+    }
+  }
+
+  function startMgTimer(s){
+    stopMgTimer(); mgTimeLeft=s;
+    var el=document.getElementById('mgTimer'); el.textContent=s; el.classList.remove('urgent');
+    mgTimerInterval=setInterval(function(){
+      mgTimeLeft--; el.textContent=mgTimeLeft;
+      if(mgTimeLeft<=2) el.classList.add('urgent');
+      if(mgTimeLeft<=0){stopMgTimer(); if(!mgPicked) mgNextRound();}
+    },1000);
+  }
+  function stopMgTimer(){if(mgTimerInterval){clearInterval(mgTimerInterval);mgTimerInterval=null;}}
+  function mgPickColor(i,guild){if(mgPicked)return;mgPicked=true;stopMgTimer();document.querySelectorAll('.mg-color-swatch')[i].classList.add('picked');if(guild)mgScores[guild]++;setTimeout(mgNextRound,500);}
+  function mgPickChoice(i,guild){if(mgPicked)return;mgPicked=true;stopMgTimer();document.querySelectorAll('.mg-choice-btn')[i].classList.add('picked');if(guild)mgScores[guild]++;setTimeout(mgNextRound,500);}
+  function mgNextRound(){mgCurrentRound++;if(mgCurrentRound>=MG_ROUNDS.length)mgFinish();else renderMgRound();}
+
+  function drawWheel(rotation){
+    var canvas=document.getElementById('mgWheelCanvas'); if(!canvas)return;
+    var ctx=canvas.getContext('2d'),cx=130,cy=130,r=120;
+    var zones=[{label:'1-10',color:'#DC3232'},{label:'11-20',color:'#FF6B1A'},{label:'21-30',color:'#9632DC'},{label:'31-40',color:'#3282DC'}];
+    ctx.clearRect(0,0,260,260);
+    zones.forEach(function(z,i){
+      var s=rotation+(i/4)*Math.PI*2-Math.PI/2, e=rotation+((i+1)/4)*Math.PI*2-Math.PI/2;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();
+      ctx.fillStyle=z.color;ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.stroke();
+      var mid=(s+e)/2;
+      ctx.save();ctx.translate(cx+Math.cos(mid)*r*0.62,cy+Math.sin(mid)*r*0.62);
+      ctx.rotate(mid+Math.PI/2);ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+      ctx.fillText(z.label,0,0);ctx.restore();
+    });
+    ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();
+    ctx.beginPath();ctx.moveTo(cx,cy-r-8);ctx.lineTo(cx-8,cy-r+8);ctx.lineTo(cx+8,cy-r+8);ctx.closePath();ctx.fillStyle='#FF6B1A';ctx.fill();
+  }
+
+  function spinWheel(){
+    var btn=document.getElementById('mgLeverBtn'); btn.disabled=true; btn.textContent='🎡 Spinning…';
+    var totalRot=(Math.PI*2*5)+(Math.random()*Math.PI*2), dur=3000, t0=performance.now();
+    var zoneGuilds=['sharpened','seekers','unknown','architects'];
+    var zoneRanges={sharpened:[1,10],seekers:[11,20],unknown:[21,30],architects:[31,40]};
+    function animate(now){
+      var t=Math.min((now-t0)/dur,1), ease=1-Math.pow(1-t,3);
+      drawWheel(totalRot*ease);
+      if(t<1){requestAnimationFrame(animate);return;}
+      var adj=((totalRot%(Math.PI*2)+Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      var gi=Math.floor(adj/(Math.PI/2))%4, g=zoneGuilds[gi];
+      mgScores[g]+=0.5;
+      var rng=zoneRanges[g], num=Math.floor(Math.random()*(rng[1]-rng[0]+1))+rng[0];
+      var res=document.getElementById('mgWheelResult'); res.style.display='block'; res.textContent='🎯 Number '+num;
+      setTimeout(mgFinish,1200);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function mgFinish(){
+    stopMgTimer(); document.getElementById('minigameOverlay').classList.remove('active');
+    var winner=null,top=-1;
+    Object.entries(mgScores).forEach(function(e){if(e[1]>top){top=e[1];winner=e[0];}else if(e[1]===top&&Math.random()>0.5){winner=e[0];}});
+    selectedGuild=winner;
+    try{sessionStorage.setItem('hq32_sorted_guild',winner);}catch(ex){}
+    var hid=document.getElementById('hiddenGuildResult'); if(hid) hid.value=winner;
+    document.getElementById('sortingLockedNotice').style.display='none';
+    document.getElementById('sortingComplete').style.display='block';
+    document.getElementById('sortingDoneOverlay').classList.add('active');
+  }
+
+  function closeSortingDone(){document.getElementById('sortingDoneOverlay').classList.remove('active');}
+
+</script>
+<!-- MINI GAME OVERLAY -->
+<div class="minigame-overlay" id="minigameOverlay">
+  <div class="mg-container">
+    <div class="mg-header">
+      <div class="mg-progress">
+        <span class="mg-round-label">Round <span id="mgRoundNum">1</span> of 5</span>
+        <div class="mg-progress-bar"><div class="mg-progress-fill" id="mgProgressFill" style="width:20%"></div></div>
+      </div>
+      <div class="mg-timer" id="mgTimer">5</div>
+    </div>
+    <div class="mg-content" id="mgContent"></div>
+    <div class="mg-category" id="mgCategory">COLOR</div>
+  </div>
+</div>
+<!-- SORTING DONE OVERLAY -->
+<div class="sorting-done-overlay" id="sortingDoneOverlay">
+  <div>
+    <div class="sd-big-icon">🔮</div>
+    <div class="sd-title">The Court Has Decided.</div>
+    <p class="sd-sub">Your guild assignment is locked. The whole league finds out together on <strong>Draft Day</strong>. Finish signing up to secure your spot.</p>
+    <button class="btn-sd-close" onclick="closeSortingDone()">Lock It In 🏀</button>
+  </div>
+</div>
+
 </body>
 </html>
